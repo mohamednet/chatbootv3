@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Models\Message;
+use App\Models\Customer;
 
 class Conversation extends Model
 {
@@ -31,5 +32,13 @@ class Conversation extends Model
     public function latestMessage()
     {
         return $this->hasOne(Message::class)->latest();
+    }
+
+    /**
+     * Get the customer associated with the conversation.
+     */
+    public function customer()
+    {
+        return $this->hasOne(Customer::class);
     }
 }

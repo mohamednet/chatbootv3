@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Conversation;
 use App\Models\Message;
+use App\Models\Customer;
 use App\Jobs\ProcessAIResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -66,6 +67,12 @@ class FacebookWebhookController extends Controller
             $conversation = Conversation::firstOrCreate(
                 ['facebook_user_id' => $senderId],
                 ['response_mode' => 'ai'] // Default to AI mode
+            );
+
+            // Create customer record if it doesn't exist
+            $customer = Customer::firstOrCreate(
+                ['facebook_id' => $senderId],
+                ['conversation_id' => $conversation->id]
             );
 
             // Extract message content safely
