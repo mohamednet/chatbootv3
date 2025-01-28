@@ -39,6 +39,9 @@ class Customer extends Model
         'email',
         'device',
         'app',
+        'response_mode',
+        'trial_status',
+        'metadata'
     ];
 
     /**

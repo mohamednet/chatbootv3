@@ -14,6 +14,50 @@
         <!-- Scripts -->
         <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+        
+        <style>
+            .animate-fadeIn {
+                animation: fadeIn 0.3s ease-out;
+            }
+            
+            .animate-slideIn {
+                animation: slideIn 0.3s ease-out;
+            }
+            
+            @keyframes fadeIn {
+                from {
+                    opacity: 0;
+                }
+                to {
+                    opacity: 1;
+                }
+            }
+            
+            @keyframes slideIn {
+                from {
+                    transform: translateY(-20px);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateY(0);
+                    opacity: 1;
+                }
+            }
+
+            /* Toast animations */
+            .toast-top-center {
+                top: 1rem;
+                right: 0;
+                width: 100%;
+            }
+            
+            .toast-top-center .toast {
+                margin: 0 auto;
+                max-width: 400px;
+                border-radius: 8px;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            }
+        </style>
     </head>
     <body class="font-sans antialiased">
         <div class="min-h-screen bg-gray-100">

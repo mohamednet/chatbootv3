@@ -6,6 +6,7 @@
         <th scope="col" class="px-6 py-3">App</th>
         <th scope="col" class="px-6 py-3">Response Mode</th>
         <th scope="col" class="px-6 py-3">Last Active</th>
+        <th scope="col" class="px-6 py-3">Trial Status</th>
         <th scope="col" class="px-6 py-3">Actions</th>
     </tr>
 </thead>
@@ -23,12 +24,26 @@
             </td>
             <td class="px-6 py-4">{{ $customer->last_message_at ? \Carbon\Carbon::parse($customer->last_message_at)->diffForHumans() : 'Never' }}</td>
             <td class="px-6 py-4">
+                <span class="px-2 py-1 text-xs rounded-full {{ $customer->trial_status === 'Sent' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
+                    {{ $customer->trial_status }}
+                </span>
+            </td>
+            <td class="px-6 py-4 space-x-2">
                 <a href="{{ route('chat.show', $customer->conversation_id) }}" class="font-medium text-blue-600 dark:text-blue-500 hover:underline">View Chat</a>
+                <button 
+                    onclick="openEmailModal('{{ $customer->facebook_id }}')"
+                    class="font-medium {{ $customer->email ? 'text-green-600 dark:text-green-500 hover:underline' : 'text-gray-400 cursor-not-allowed' }}"
+                    {{ !$customer->email ? 'disabled' : '' }}
+                    title="{{ !$customer->email ? 'Email required to send trial' : 'Send trial email' }}"
+                >
+                    Send Email
+                </button>
             </td>
         </tr>
+        <x-email-modal :customer="$customer" />
     @empty
         <tr>
-            <td colspan="7" class="px-6 py-4 text-center">No customers found</td>
+            <td colspan="8" class="px-6 py-4 text-center">No customers found</td>
         </tr>
     @endforelse
 </tbody>

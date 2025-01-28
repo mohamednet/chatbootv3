@@ -144,11 +144,11 @@ class OpenAiService
             // Add current context to system message
             $messages[0]['content'] .= "\n\nCurrent Conversation:\n" . $currentContext;
 
-            /*Log::info('Sending request to OpenAI', [
+            Log::info('Sending request to OpenAI', [
                 'conversation_id' => $conversationId,
                 'context' => $currentContext,
                 'messages' => $messages
-            ]);*/
+            ]);
 
             $response = OpenAI::chat()->create([
                 'model' => 'gpt-3.5-turbo',
