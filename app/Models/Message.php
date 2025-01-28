@@ -17,12 +17,24 @@ class Message extends Model
         'type',
         'sender_type',
         'admin_id',
-        'metadata'
+        'metadata',
+        'facebook_message_id'
     ];
 
     protected $casts = [
         'metadata' => 'array'
     ];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::created(function ($message) {
+            $message->conversation->update([
+                'last_message_at' => $message->created_at
+            ]);
+        });
+    }
 
     public function conversation()
     {

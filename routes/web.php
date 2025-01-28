@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ChatController;
+use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\FacebookWebhookController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SSEController;
@@ -22,12 +23,18 @@ Route::middleware(['web'])->group(function () {
 
     // Admin Dashboard Routes
     Route::middleware(['auth'])->group(function () {
+        // Chat Routes
         Route::get('/conversations', [ChatController::class, 'index'])->name('chat.index');
         Route::get('/conversations/updates', [ChatController::class, 'getUpdates'])->name('chat.updates');
         Route::get('/conversations/{conversation}', [ChatController::class, 'show'])->name('chat.show');
         Route::get('/conversations/{conversation}/messages', [ChatController::class, 'getNewMessages'])->name('chat.get-messages');
         Route::post('/conversations/{conversation}/messages', [ChatController::class, 'sendMessage'])->name('chat.send-message');
         Route::post('/conversations/{conversation}/toggle-mode', [ChatController::class, 'toggleResponseMode'])->name('chat.toggle-mode');
+        
+        // Customer Routes
+        Route::get('/customers', [CustomerController::class, 'index'])->name('customers.index');
+        Route::get('/customers/updates', [CustomerController::class, 'getUpdates'])->name('customers.updates');
+        
         Route::get('/stream', [SSEController::class, 'stream'])->name('stream');
     });
 

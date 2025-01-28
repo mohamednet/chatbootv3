@@ -16,9 +16,8 @@ return new class extends Migration
             $table->foreignId('conversation_id')->constrained()->onDelete('cascade');
             $table->text('content');
             $table->enum('type', ['incoming', 'outgoing']);
-            $table->enum('sender_type', ['user', 'ai', 'admin']);
-            $table->foreignId('admin_id')->nullable()->constrained('users')->onDelete('set null');
-            $table->json('metadata')->nullable();
+            $table->enum('sender_type', ['user', 'admin', 'ai', 'manual'])->default('user');
+            $table->string('facebook_message_id')->nullable()->unique();
             $table->timestamps();
         });
     }
