@@ -12,7 +12,7 @@
 <tbody>
     @forelse($customers as $customer)
         <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
-            <td class="px-6 py-4">{{ substr($customer->facebook_id, -4) }}</td>
+            <td class="px-6 py-4">{{ $customer->facebook_id }}</td>
             <td class="px-6 py-4">{{ $customer->email ?? 'N/A' }}</td>
             <td class="px-6 py-4">{{ $customer->device ?? 'N/A' }}</td>
             <td class="px-6 py-4">{{ $customer->app ?? 'N/A' }}</td>
