@@ -45,4 +45,28 @@ class Message extends Model
     {
         return $this->belongsTo(User::class, 'admin_id');
     }
+
+    public function isAttachment()
+    {
+        return str_starts_with($this->content, '[Attachment:');
+    }
+
+    public function parseAttachment()
+    {
+        if (!$this->isAttachment()) return null;
+        
+        // Extract the content between [Attachment: ] brackets
+        preg_match('/\[Attachment: \[(.*?)\]\]/', $this->content, $matches);
+        if (empty($matches[1])) return null;
+        
+        // Parse type and url
+        $parts = explode(', ', $matches[1]);
+        $type = str_replace('type: ', '', $parts[0]);
+        $url = str_replace('url: ', '', str_replace("'", '', $parts[1]));
+        
+        return [
+            'type' => $type,
+            'url' => $url
+        ];
+    }
 }

@@ -38,7 +38,18 @@
                                 <div class="flex {{ $message->type === 'incoming' ? 'justify-start' : 'justify-end' }}">
                                     <div class="max-w-[70%] {{ $message->type === 'incoming' ? 'bg-white' : ($message->sender_type === 'ai' ? 'bg-green-100' : 'bg-blue-100') }} rounded-lg px-4 py-2 shadow">
                                         <div class="text-sm {{ $message->type === 'incoming' ? 'text-gray-800' : 'text-gray-900' }}">
-                                            {{ $message->content }}
+                                            @if($message->isAttachment())
+                                                @php $attachment = $message->parseAttachment() @endphp
+                                                @if($attachment && $attachment['type'] === 'image')
+                                                    <img src="{{ $attachment['url'] }}" 
+                                                         alt="Attachment" 
+                                                         class="max-h-48 rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                                                         onclick="openImageModal('{{ $attachment['url'] }}')"
+                                                    >
+                                                @endif
+                                            @else
+                                                {{ $message->content }}
+                                            @endif
                                         </div>
                                         <div class="text-xs text-gray-500 mt-1">
                                             {{ $message->created_at->format('M j, g:i a') }}
@@ -74,6 +85,11 @@
         </div>
     </div>
 
+    <!-- Image Modal -->
+    <div id="imageModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex justify-center items-center">
+        <img id="modalImage" src="" alt="Image" class="max-w-full max-h-full">
+    </div>
+
     <script>
         const conversationId = {{ $conversation->id }};
         let displayedMessageIds = new Set();
@@ -88,29 +104,56 @@
             if (displayedMessageIds.has(message.id)) {
                 return; // Skip if already displayed
             }
-
-            const container = document.querySelector('#messagesContainer .space-y-4');
-            const messageElement = document.createElement('div');
-            messageElement.className = `flex ${message.type === 'incoming' ? 'justify-start' : 'justify-end'}`;
             
-            messageElement.innerHTML = `
-                <div class="max-w-[70%] ${message.type === 'incoming' ? 'bg-white' : (message.sender_type === 'ai' ? 'bg-green-100' : 'bg-blue-100')} rounded-lg px-4 py-2 shadow">
-                    <div class="text-sm ${message.type === 'incoming' ? 'text-gray-800' : 'text-gray-900'}">
-                        ${message.content}
-                    </div>
-                    <div class="text-xs text-gray-500 mt-1">
-                        ${message.created_at}
-                        ${message.type === 'outgoing' ? ` · ${message.sender_type === 'ai' ? 'AI' : 'Manual'}` : ''}
-                    </div>
-                </div>
-            `;
+            let content = '';
+            if (message.content.startsWith('[Attachment:')) {
+                const match = message.content.match(/\[Attachment: \[(.*?)\]\]/);
+                if (match) {
+                    const parts = match[1].split(', ');
+                    const type = parts[0].replace('type: ', '');
+                    const url = parts[1].replace('url: ', '').replace(/'/g, '');
+                    
+                    if (type === 'image') {
+                        content = `<img src="${url}" alt="Attachment" class="max-w-full rounded-lg cursor-pointer hover:opacity-90 transition-opacity" onclick="openImageModal('${url}')">`;
+                    }
+                }
+            } else {
+                content = message.content;
+            }
 
-            container.appendChild(messageElement);
-            displayedMessageIds.add(message.id);
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `flex ${message.type === 'incoming' ? 'justify-start' : 'justify-end'}`;
+            
+            const innerDiv = document.createElement('div');
+            innerDiv.className = `max-w-[70%] ${message.type === 'incoming' ? 'bg-white' : (message.sender_type === 'ai' ? 'bg-green-100' : 'bg-blue-100')} rounded-lg px-4 py-2 shadow`;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = `text-sm ${message.type === 'incoming' ? 'text-gray-800' : 'text-gray-900'}`;
+            contentDiv.innerHTML = content;
+            
+            const timeDiv = document.createElement('div');
+            timeDiv.className = 'text-xs text-gray-500 mt-1';
+            const date = new Date(message.created_at);
+            timeDiv.textContent = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + 
+                                ', ' + date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+            
+            if (message.type === 'outgoing') {
+                timeDiv.textContent += ` · ${message.sender_type === 'ai' ? 'AI' : 'Manual'}`;
+            }
+            
+            innerDiv.appendChild(contentDiv);
+            innerDiv.appendChild(timeDiv);
+            messageDiv.appendChild(innerDiv);
+            
+            const container = document.querySelector('#messagesContainer .space-y-4');
+            container.appendChild(messageDiv);
             
             // Scroll to bottom
             const messagesContainer = document.getElementById('messagesContainer');
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            
+            // Add to displayed set
+            displayedMessageIds.add(message.id);
         }
 
         // Function to fetch new messages
@@ -199,6 +242,38 @@
                 console.error('Error toggling mode:', error);
             }
         };
+
+        // Image Modal Functions
+        function openImageModal(imageUrl) {
+            const modal = document.getElementById('imageModal');
+            const modalImage = document.getElementById('modalImage');
+            modalImage.src = imageUrl;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            
+            // Close modal when clicking outside the image
+            modal.onclick = function(e) {
+                if (e.target === modal) {
+                    closeImageModal();
+                }
+            };
+
+            // Add escape key listener
+            document.addEventListener('keydown', closeModalOnEscape);
+        }
+
+        function closeImageModal() {
+            const modal = document.getElementById('imageModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            document.removeEventListener('keydown', closeModalOnEscape);
+        }
+
+        function closeModalOnEscape(e) {
+            if (e.key === 'Escape') {
+                closeImageModal();
+            }
+        }
 
         // Scroll to bottom on load
         document.addEventListener('DOMContentLoaded', () => {

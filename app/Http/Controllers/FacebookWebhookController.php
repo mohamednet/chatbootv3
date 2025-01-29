@@ -91,7 +91,8 @@ class FacebookWebhookController extends Controller
                 } elseif (isset($messagingEvent['message']['quick_reply'])) {
                     $messageContent = $messagingEvent['message']['quick_reply']['payload'];
                 } elseif (isset($messagingEvent['message']['attachments'])) {
-                    $messageContent = '[Attachment: ' . $messagingEvent['message']['attachments'][0]['type'] . ']';
+                    $attachment = $messagingEvent['message']['attachments'][0];
+                    $messageContent = '[Attachment: [type: ' . $attachment['type'] . ', url: \'' . $attachment['payload']['url'] . '\']]';
                 }
             }
 
