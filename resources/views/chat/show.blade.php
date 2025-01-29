@@ -43,7 +43,7 @@
                                                 @if($attachment && $attachment['type'] === 'image')
                                                     <img src="{{ $attachment['url'] }}" 
                                                          alt="Attachment" 
-                                                         class="max-h-48 rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                                                         class="max-h-32 w-auto rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
                                                          onclick="openImageModal('{{ $attachment['url'] }}')"
                                                     >
                                                 @endif
@@ -91,6 +91,38 @@
     </div>
 
     <script>
+        // Image Modal Functions
+        function openImageModal(imageUrl) {
+            const modal = document.getElementById('imageModal');
+            const modalImage = document.getElementById('modalImage');
+            modalImage.src = imageUrl;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            
+            // Close modal when clicking outside the image
+            modal.onclick = function(e) {
+                if (e.target === modal) {
+                    closeImageModal();
+                }
+            };
+
+            // Add escape key listener
+            document.addEventListener('keydown', closeModalOnEscape);
+        }
+
+        function closeImageModal() {
+            const modal = document.getElementById('imageModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            document.removeEventListener('keydown', closeModalOnEscape);
+        }
+
+        function closeModalOnEscape(e) {
+            if (e.key === 'Escape') {
+                closeImageModal();
+            }
+        }
+
         const conversationId = {{ $conversation->id }};
         let displayedMessageIds = new Set();
 
@@ -242,38 +274,6 @@
                 console.error('Error toggling mode:', error);
             }
         };
-
-        // Image Modal Functions
-        function openImageModal(imageUrl) {
-            const modal = document.getElementById('imageModal');
-            const modalImage = document.getElementById('modalImage');
-            modalImage.src = imageUrl;
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            
-            // Close modal when clicking outside the image
-            modal.onclick = function(e) {
-                if (e.target === modal) {
-                    closeImageModal();
-                }
-            };
-
-            // Add escape key listener
-            document.addEventListener('keydown', closeModalOnEscape);
-        }
-
-        function closeImageModal() {
-            const modal = document.getElementById('imageModal');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-            document.removeEventListener('keydown', closeModalOnEscape);
-        }
-
-        function closeModalOnEscape(e) {
-            if (e.key === 'Escape') {
-                closeImageModal();
-            }
-        }
 
         // Scroll to bottom on load
         document.addEventListener('DOMContentLoaded', () => {

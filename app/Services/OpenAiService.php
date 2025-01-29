@@ -103,12 +103,10 @@ class OpenAiService
     public function generateResponse($message, $conversationId)
     {
         try {
-            // Get recent conversation history (last 10 messages)
+            // Get all conversation history
             $history = Message::where('conversation_id', $conversationId)
-                ->orderBy('created_at', 'desc')
-                ->take(10)
-                ->get()
-                ->reverse();
+                ->orderBy('created_at', 'asc')  // Get messages in chronological order
+                ->get();
 
             // Build messages array with conversation history
             $messages = [
