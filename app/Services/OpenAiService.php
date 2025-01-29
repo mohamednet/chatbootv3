@@ -66,8 +66,11 @@ class OpenAiService
     - Let the customer know that the trial login credentials will be sent within a few minutes to a few hours, as soon as possible.
     - Thank the customer for choosing our service and let them know they can reach out anytime for further assistance.
 
-    ---
+    ---";
 
+    //this is the instrunction
+    /*
+    
     IMPORTANT:
     Your task is to assist customers and dynamically track the following information during the conversation:
     - Device: Identify the customer's device based on their messages (e.g., Firestick, Android, iPhone, etc.).
@@ -94,7 +97,8 @@ class OpenAiService
     - Keep previously detected values unless the customer changes them.
 
 
-    ";
+    
+    */
 
     public function generateResponse($message, $conversationId)
     {
@@ -156,8 +160,10 @@ class OpenAiService
                 'max_tokens' => 150,
                 'temperature' => 0.7,
             ]);
-            $aiResponse = json_decode($response->choices[0]->message->content, true);
+            $aiResponse = $response->choices[0]->message->content;
             
+            //this is the code and dont change anythink else 
+            /*
             //here update the customer data
             if (isset($aiResponse['customers_data'])) {
                 try {
@@ -188,8 +194,9 @@ class OpenAiService
                     Log::error('Failed to update customer data: ' . $e->getMessage());
                 }
             }
+        */
 
-            return $aiResponse['response'];
+            return $aiResponse;
         } catch (\Exception $e) {
             // Log::error('OpenAI API error: ' . $e->getMessage());
             return "I apologize, but I'm having trouble processing your request at the moment. Please try again later.";

@@ -6,12 +6,20 @@ use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\Customer;
 use App\Jobs\ProcessAIResponse;
+use App\Services\CustomerDataAnalysisService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
 
 class FacebookWebhookController extends Controller
 {
+    private $customerDataService;
+
+    public function __construct(CustomerDataAnalysisService $customerDataService)
+    {
+        $this->customerDataService = $customerDataService;
+    }
+
     public function verify(Request $request)
     {
         $verifyToken = config('services.facebook.webhook_verify_token');
@@ -109,6 +117,9 @@ class FacebookWebhookController extends Controller
 
             // Update conversation timestamp
             $conversation->touch();
+
+            // Analyze customer data
+            $this->customerDataService->analyzeCustomerData($conversation->id);
 
             // If in AI mode, dispatch job with delay
             if ($conversation->response_mode === 'ai') {
