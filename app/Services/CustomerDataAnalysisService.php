@@ -100,14 +100,27 @@ class CustomerDataAnalysisService
                     
                     // Check if email was just detected
                     if (!empty($aiResponse['customers_data']['email'])) {
-                        // Update conversation mode to manual
-                        Conversation::where('id', $conversationId)
-                            ->update(['response_mode' => 'manual']);
+                        // Get customer record to check trial status
+                        $customer = Customer::where('conversation_id', $conversationId)->first();
                         
-                        Log::info('Email detected and mode changed to manual', [
-                            'conversation_id' => $conversationId,
-                            'email' => $aiResponse['customers_data']['email']
-                        ]);
+                        // Only change to manual mode if trial hasn't been sent yet
+                        if ($customer && $customer->trial_status !== 'Sent') {
+                            // Update conversation mode to manual
+                            Conversation::where('id', $conversationId)
+                                ->update(['response_mode' => 'manual']);
+                            
+                            Log::info('Email detected and mode changed to manual', [
+                                'conversation_id' => $conversationId,
+                                'email' => $aiResponse['customers_data']['email'],
+                                'trial_status' => $customer->trial_status
+                            ]);
+                        } else {
+                            Log::info('Email detected but trial already sent, keeping current mode', [
+                                'conversation_id' => $conversationId,
+                                'email' => $aiResponse['customers_data']['email'],
+                                'trial_status' => $customer ? $customer->trial_status : 'Unknown'
+                            ]);
+                        }
                     }
 
                     Log::info('Customer data updated', [
