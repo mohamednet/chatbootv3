@@ -18,8 +18,11 @@
                     <x-nav-link :href="route('chat.index')" :active="request()->routeIs('chat.index')">
                         {{ __('Conversations') }}
                     </x-nav-link>
-                    <x-nav-link :href="route('customers.index')" :active="request()->routeIs('customers.index')">
+                    <x-nav-link :href="route('customers.index')" :active="request()->routeIs('customers.*')">
                         {{ __('Customers') }}
+                    </x-nav-link>
+                    <x-nav-link :href="route('trials.index')" :active="request()->routeIs('trials.*')">
+                        {{ __('Trials') }}
                     </x-nav-link>
                 </div>
             </div>
@@ -76,11 +79,11 @@
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('chat.index')" :active="request()->routeIs('chat.index')">
-                {{ __('Conversations') }}
-            </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('customers.index')" :active="request()->routeIs('customers.index')">
+            <x-responsive-nav-link :href="route('customers.index')" :active="request()->routeIs('customers.*')">
                 {{ __('Customers') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('trials.index')" :active="request()->routeIs('trials.*')">
+                {{ __('Trials') }}
             </x-responsive-nav-link>
         </div>
 

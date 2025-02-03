@@ -5,6 +5,7 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\FacebookWebhookController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SSEController;
+use App\Http\Controllers\TrialController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Mail;
 
@@ -36,6 +37,9 @@ Route::middleware(['web'])->group(function () {
         Route::get('/customers', [CustomerController::class, 'index'])->name('customers.index');
         Route::get('/customers/updates', [CustomerController::class, 'getUpdates'])->name('customers.updates');
         Route::post('/customers/{customer}/send-trial', [CustomerController::class, 'sendTrial'])->name('customers.send-trial');
+        
+        // Trial Routes
+        Route::resource('trials', TrialController::class);
         
         Route::get('/stream', [SSEController::class, 'stream'])->name('stream');
     });

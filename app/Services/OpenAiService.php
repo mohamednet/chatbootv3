@@ -68,38 +68,6 @@ class OpenAiService
 
     ---";
 
-    //this is the instrunction
-    /*
-    
-    IMPORTANT:
-    Your task is to assist customers and dynamically track the following information during the conversation:
-    - Device: Identify the customer's device based on their messages (e.g., Firestick, Android, iPhone, etc.).
-    - App: Identify the IPTV app the customer is using or planning to use (e.g., Tivimate, IBO Pro Player, etc.).
-    - Email: Detect the customer's email address when provided.
-
-    CRITICAL - YOU MUST FORMAT YOUR ENTIRE RESPONSE AS JSON:
-    You must ALWAYS return your COMPLETE response in this exact JSON format, with no additional text before or after so I can work on it in the backend:
-
-    {
-        response: \"Your actual message to the customer goes here\",
-        customers_data: {
-            device: null,
-            app: null,
-            email: null
-        }
-    }
-
-    IMPORTANT:
-    - Your ENTIRE response must be valid JSON with response and customers_data fields always present.
-    - Do not add any text before or after the JSON.
-    - Always include both response and customers_data.
-    - Update customer data when you detect new information.
-    - Keep previously detected values unless the customer changes them.
-
-
-    
-    */
-
     public function generateResponse($message, $conversationId)
     {
         try {
@@ -159,40 +127,6 @@ class OpenAiService
                 'temperature' => 0.7,
             ]);
             $aiResponse = $response->choices[0]->message->content;
-            
-            //this is the code and dont change anythink else 
-            /*
-            //here update the customer data
-            if (isset($aiResponse['customers_data'])) {
-                try {
-                    Customer::where('conversation_id', $conversationId)
-                        ->update([
-                            'device' => $aiResponse['customers_data']['device'],
-                            'app' => $aiResponse['customers_data']['app'],
-                            'email' => $aiResponse['customers_data']['email']
-                        ]);
-                    
-                    // Check if email was just detected
-                    if (!empty($aiResponse['customers_data']['email'])) {
-                        // Update conversation mode to manual
-                        Conversation::where('id', $conversationId)
-                            ->update(['response_mode' => 'manual']);
-                        
-                        Log::info('Email detected and mode changed to manual', [
-                            'conversation_id' => $conversationId,
-                            'email' => $aiResponse['customers_data']['email']
-                        ]);
-                    }
-
-                    Log::info('Customer data updated', [
-                        'conversation_id' => $conversationId,
-                        'data' => $aiResponse['customers_data']
-                    ]);
-                } catch (\Exception $e) {
-                    Log::error('Failed to update customer data: ' . $e->getMessage());
-                }
-            }
-        */
 
             return $aiResponse;
         } catch (\Exception $e) {
