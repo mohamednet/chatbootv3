@@ -85,12 +85,14 @@ class FacebookWebhookController extends Controller
 
             // Extract message content safely
             $messageContent = '';
+            $hasAttachment = false;
             if (isset($messagingEvent['message'])) {
                 if (isset($messagingEvent['message']['text'])) {
                     $messageContent = $messagingEvent['message']['text'];
                 } elseif (isset($messagingEvent['message']['quick_reply'])) {
                     $messageContent = $messagingEvent['message']['quick_reply']['payload'];
                 } elseif (isset($messagingEvent['message']['attachments'])) {
+                    $hasAttachment = true;
                     $attachment = $messagingEvent['message']['attachments'][0];
                     $messageContent = '[Attachment: [type: ' . $attachment['type'] . ', url: \'' . $attachment['payload']['url'] . '\']]';
                 }
@@ -98,7 +100,8 @@ class FacebookWebhookController extends Controller
 
             Log::info('Extracted message content', [
                 'content' => $messageContent,
-                'conversation_id' => $conversation->id
+                'conversation_id' => $conversation->id,
+                'has_attachment' => $hasAttachment
             ]);
 
             // Store the incoming message
@@ -118,6 +121,17 @@ class FacebookWebhookController extends Controller
 
             // Update conversation timestamp
             $conversation->touch();
+
+            // If message has attachment, switch to manual mode
+            if ($hasAttachment) {
+                $conversation->update(['response_mode' => 'manual']);
+                $message->update(['processed' => true]);
+                Log::info('Switched to manual mode due to attachment', [
+                    'conversation_id' => $conversation->id,
+                    'message_id' => $message->id
+                ]);
+                return;
+            }
 
             // Analyze customer data
             $this->customerDataService->analyzeCustomerData($conversation->id);

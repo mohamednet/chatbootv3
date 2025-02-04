@@ -101,7 +101,9 @@ class CustomerDataAnalysisService
                         ]);
                     
                     // Check if email was just detected
-                    if (!empty($aiResponse['customers_data']['email'])) {
+                    if (!empty($aiResponse['customers_data']['email']) 
+                    && (!empty($aiResponse['customers_data']['device']) 
+                        || !empty($aiResponse['customers_data']['app']))) {
                         // Get customer record to check trial status
                         $customer = Customer::where('conversation_id', $conversationId)->first();
                         
