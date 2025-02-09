@@ -37,7 +37,8 @@ return [
 
     'facebook' => [
         'page_access_token' => env('FACEBOOK_PAGE_ACCESS_TOKEN'),
-        'webhook_verify_token' => 'BzJE83I0j50YUQgpx4ogkIayCKMaACmjLKr4imQRUCVIbdeD1L2MMFyQoF6lkAHV',
+        'app_id' => env('FACEBOOK_APP_ID'),
+        'webhook_verify_token' => env('FACEBOOK_WEBHOOK_VERIFY_TOKEN'),
     ],
 
     'openai' => [

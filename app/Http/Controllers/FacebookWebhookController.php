@@ -48,8 +48,13 @@ class FacebookWebhookController extends Controller
 
             if (isset($data['entry'][0]['messaging'][0])) {
                 $messagingEvent = $data['entry'][0]['messaging'][0];
+                // Check if this is an echo message (sent from page)
+                if (isset($messagingEvent['message']['is_echo']) && isset($messagingEvent['message']['app_id']) && $messagingEvent['message']['app_id'] != config('services.facebook.app_id')) {
+                    return $this->handlePageMessage($messagingEvent);
+                }else if(isset($messagingEvent['message']['is_echo']) && isset($messagingEvent['message']['app_id']) && $messagingEvent['message']['app_id'] == config('services.facebook.app_id')) {
+                    return ;
+                }
                 $senderId = $messagingEvent['sender']['id'];
-
                 $this->handleMessage($messagingEvent, $senderId);
             }
 
@@ -59,6 +64,91 @@ class FacebookWebhookController extends Controller
                 'trace' => $e->getTraceAsString()
             ]);
             return response('Error', 500);
+        }
+    }
+
+    private function handlePageMessage($messagingEvent)
+    {
+        try {
+            $recipientId = $messagingEvent['recipient']['id'];
+            $messageId = $messagingEvent['message']['mid'];
+            
+            Log::info('Processing page message', [
+                'recipient_id' => $recipientId,
+                'message_id' => $messageId
+            ]);
+
+            // Get or create conversation and customer
+            $conversation = Conversation::firstOrCreate(
+                ['facebook_user_id' => $recipientId],
+                [
+                    'response_mode' => 'manual', // Set to manual mode for page messages
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ]
+            );
+
+            if ($conversation->wasRecentlyCreated) {
+                Log::info('Created new conversation for page message', ['conversation_id' => $conversation->id]);
+            }
+
+            $customer = Customer::firstOrCreate(
+                ['facebook_id' => $recipientId],
+                [
+                    'conversation_id' => $conversation->id,
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ]
+            );
+
+            if ($customer->wasRecentlyCreated) {
+                Log::info('Created new customer for page message', ['customer_id' => $customer->id]);
+            }
+
+            // Extract message content
+            $messageContent = '';
+            if (isset($messagingEvent['message']['text'])) {
+                $messageContent = $messagingEvent['message']['text'];
+            } elseif (isset($messagingEvent['message']['attachments'])) {
+                $attachment = $messagingEvent['message']['attachments'][0];
+                $messageContent = '[Attachment: [type: ' . $attachment['type'] . ', url: \'' . $attachment['payload']['url'] . '\']]';
+            }
+
+            // Store the outgoing message
+            $message = new Message([
+                'conversation_id' => $conversation->id,
+                'content' => $messageContent,
+                'type' => 'outgoing',
+                'sender_type' => 'admin',
+                'facebook_message_id' => $messageId,
+                'processed' => true // Mark as processed immediately
+            ]);
+            $message->save();
+
+            Log::info('Stored page message', [
+                'message_id' => $message->id,
+                'conversation_id' => $conversation->id,
+                'content' => $messageContent
+            ]);
+
+            // Update conversation to manual mode and clear pending responses
+            $conversation->update([
+                'response_mode' => 'manual',
+                'updated_at' => now()
+            ]);
+
+            // Mark any unprocessed messages as processed
+            Message::where('conversation_id', $conversation->id)
+                  ->where('processed', false)
+                  ->update(['processed' => true]);
+
+            return response('OK', 200);
+        } catch (\Exception $e) {
+            Log::error('Error handling page message: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'messaging_event' => $messagingEvent
+            ]);
+            throw $e;
         }
     }
 
