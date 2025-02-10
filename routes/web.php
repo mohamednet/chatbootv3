@@ -5,6 +5,7 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\FacebookWebhookController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SSEController;
+use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\TrialController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Mail;
@@ -40,6 +41,12 @@ Route::middleware(['web'])->group(function () {
         
         // Trial Routes
         Route::resource('trials', TrialController::class);
+        
+        // Subscriber Routes
+        Route::get('/subscribers', [SubscriberController::class, 'index'])->name('subscribers.index');
+        
+        // Subscription Management Routes
+        Route::get('/subscriptions', [SubscriptionController::class, 'index'])->name('subscriptions.index');
         
         Route::get('/stream', [SSEController::class, 'stream'])->name('stream');
     });

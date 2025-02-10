@@ -41,7 +41,16 @@ class Customer extends Model
         'app',
         'response_mode',
         'trial_status',
-        'metadata'
+        'metadata',
+        'paid_status',
+        'subscription_id',
+        'subscription_end_date',
+        'last_payment_date',
+        'subscription_type',
+        'number_of_devices',
+        'plan',
+        'amount',
+        'payment_method'
     ];
 
     /**

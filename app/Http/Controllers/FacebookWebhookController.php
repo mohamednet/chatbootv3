@@ -125,6 +125,80 @@ class FacebookWebhookController extends Controller
             ]);
             $message->save();
 
+            Log::info('Processing message:', ['content' => $messageContent]);
+
+            if (str_starts_with(trim($messageContent), 'PAID')) {
+                Log::info('Found PAID message');
+                
+                try {
+                    // Extract subscription information using regex
+                    preg_match('/ID: ([\w-]+)/', $messageContent, $idMatches);
+                    preg_match('/Device: (\d+)/', $messageContent, $deviceMatches);
+                    preg_match('/Subscription: (\d+)\s*months?/', $messageContent, $subMatches);
+                    preg_match('/Plan: (\w+)/', $messageContent, $planMatches);
+                    preg_match('/Amount: \$(\d+)/', $messageContent, $amountMatches);
+                    preg_match('/Payment: (\w+)/', $messageContent, $paymentMatches);
+
+                    Log::info('Regex matches:', [
+                        'id' => $idMatches ?? 'no match',
+                        'device' => $deviceMatches ?? 'no match',
+                        'subscription' => $subMatches ?? 'no match',
+                        'plan' => $planMatches ?? 'no match',
+                        'amount' => $amountMatches ?? 'no match',
+                        'payment' => $paymentMatches ?? 'no match'
+                    ]);
+
+                    if ($idMatches && $deviceMatches && $subMatches) {
+                        $subscriptionId = $idMatches[1];
+                        $devices = (int)$deviceMatches[1];
+                        $months = (int)$subMatches[1];
+                        $plan = $planMatches[1] ?? 'Basic';
+                        $amount = $amountMatches[1] ?? 0;
+                        $paymentMethod = $paymentMatches[1] ?? 'Unknown';
+
+                        Log::info('Extracted values:', [
+                            'subscriptionId' => $subscriptionId,
+                            'devices' => $devices,
+                            'months' => $months,
+                            'plan' => $plan,
+                            'amount' => $amount,
+                            'paymentMethod' => $paymentMethod
+                        ]);
+
+                        // Calculate subscription end date
+                        $endDate = now()->addMonths($months);
+
+                        // Update customer subscription details
+                        $customer->update([
+                            'paid_status' => true,
+                            'subscription_id' => $subscriptionId,
+                            'subscription_end_date' => $endDate,
+                            'last_payment_date' => now(),
+                            'subscription_type' => $months . ' months',
+                            'number_of_devices' => $devices,
+                            'plan' => $plan,
+                            'amount' => $amount,
+                            'payment_method' => $paymentMethod
+                        ]);
+
+                        Log::info('Updated customer subscription', [
+                            'customer_id' => $customer->id,
+                            'subscription_id' => $subscriptionId,
+                            'devices' => $devices,
+                            'months' => $months,
+                            'end_date' => $endDate
+                        ]);
+                    } else {
+                        Log::warning('Required matches not found in PAID message');
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Error processing subscription message', [
+                        'message' => $messageContent,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+
             Log::info('Stored page message', [
                 'message_id' => $message->id,
                 'conversation_id' => $conversation->id,

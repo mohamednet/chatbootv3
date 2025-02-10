@@ -21,6 +21,9 @@
                     <x-nav-link :href="route('customers.index')" :active="request()->routeIs('customers.*')">
                         {{ __('Customers') }}
                     </x-nav-link>
+                    <x-nav-link :href="route('subscriptions.index')" :active="request()->routeIs('subscriptions.*')">
+                        {{ __('Subscriptions') }}
+                    </x-nav-link>
                     <x-nav-link :href="route('trials.index')" :active="request()->routeIs('trials.*')">
                         {{ __('Trials') }}
                     </x-nav-link>
@@ -81,6 +84,9 @@
             </x-responsive-nav-link>
             <x-responsive-nav-link :href="route('customers.index')" :active="request()->routeIs('customers.*')">
                 {{ __('Customers') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('subscriptions.index')" :active="request()->routeIs('subscriptions.*')">
+                {{ __('Subscriptions') }}
             </x-responsive-nav-link>
             <x-responsive-nav-link :href="route('trials.index')" :active="request()->routeIs('trials.*')">
                 {{ __('Trials') }}
