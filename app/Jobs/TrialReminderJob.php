@@ -2,7 +2,7 @@
 
 namespace App\Jobs;
 
-use App\Models\Trial;
+use App\Mail\TrialReminder;
 use App\Models\Customer;
 use App\Services\FacebookService;
 use App\Services\MessageTemplateService;
@@ -13,15 +13,20 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use App\Mail\TrialReminder;
 
 class TrialReminderJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    public function __construct()
+    {
+    }
+
     public function handle(FacebookService $facebookService)
     {
         try {
+            Log::info('Starting trial reminder job');
+
             // Handle customers who had trials but haven't paid
             $customersWithTrials = Customer::query()
                 ->where('trial_status', 'Sent')  // Has received a trial
@@ -46,6 +51,8 @@ class TrialReminderJob implements ShouldQueue
                 })
                 ->get();
 
+            Log::info('Found customers with trials:', ['count' => $customersWithTrials->count()]);
+
             foreach ($customersWithTrials as $customer) {
                 $reminderType = match($customer->reminder_count_trial) {
                     0 => 'first',
@@ -53,22 +60,33 @@ class TrialReminderJob implements ShouldQueue
                     2 => 'third'
                 };
 
-                // Send messages
-                $facebookService->sendMessage(
-                    $customer->facebook_id,
-                    MessageTemplateService::getTrialTemplate($reminderType, 'facebook')
-                );
+                try {
+                    // Send messages
+                    $facebookService->sendMessage(
+                        $customer->facebook_id,
+                        MessageTemplateService::getTrialTemplate($reminderType, 'facebook')
+                    );
 
-                if ($customer->email) {
-                    Mail::to($customer->email)->send(new TrialReminder(
-                        MessageTemplateService::getTrialTemplate($reminderType, 'email_subject'),
-                        MessageTemplateService::getTrialTemplate($reminderType, 'email_content')
-                    ));
+                    if ($customer->email) {
+                        Mail::to($customer->email)->send(new TrialReminder(
+                            MessageTemplateService::getTrialTemplate($reminderType, 'email_subject'),
+                            MessageTemplateService::getTrialTemplate($reminderType, 'email_content')
+                        ));
+                    }
+
+                    $customer->increment('reminder_count_trial');
+                    $customer->update(['last_reminder_sent' => now()]);
+                    Log::info("Sent {$reminderType} trial reminder", [
+                        'customer_id' => $customer->facebook_id,
+                        'reminder_count' => $customer->reminder_count_trial
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error("Error sending reminder to customer", [
+                        'customer_id' => $customer->facebook_id,
+                        'error' => $e->getMessage()
+                    ]);
+                    continue;
                 }
-
-                $customer->increment('reminder_count_trial');
-                $customer->update(['last_reminder_sent' => now()]);
-                Log::info("Sent {$reminderType} trial reminder", ['customer_id' => $customer->id]);
             }
 
             // Handle customers who never had trials
@@ -103,6 +121,8 @@ class TrialReminderJob implements ShouldQueue
                 })
                 ->get();
 
+            Log::info('Found customers without trials:', ['count' => $customersWithoutTrials->count()]);
+
             foreach ($customersWithoutTrials as $customer) {
                 $reminderType = match($customer->reminder_count_trial) {
                     0 => 'first',
@@ -112,22 +132,33 @@ class TrialReminderJob implements ShouldQueue
                     4 => 'fifth'
                 };
 
-                // Send messages
-                $facebookService->sendMessage(
-                    $customer->facebook_id,
-                    MessageTemplateService::getTrialTemplate($reminderType . '_no_trial', 'facebook')
-                );
+                try {
+                    // Send messages
+                    $facebookService->sendMessage(
+                        $customer->facebook_id,
+                        MessageTemplateService::getTrialTemplate($reminderType . '_no_trial', 'facebook')
+                    );
 
-                if ($customer->email) {
-                    Mail::to($customer->email)->send(new TrialReminder(
-                        MessageTemplateService::getTrialTemplate($reminderType . '_no_trial', 'email_subject'),
-                        MessageTemplateService::getTrialTemplate($reminderType . '_no_trial', 'email_content')
-                    ));
+                    if ($customer->email) {
+                        Mail::to($customer->email)->send(new TrialReminder(
+                            MessageTemplateService::getTrialTemplate($reminderType . '_no_trial', 'email_subject'),
+                            MessageTemplateService::getTrialTemplate($reminderType . '_no_trial', 'email_content')
+                        ));
+                    }
+
+                    $customer->increment('reminder_count_trial');
+                    $customer->update(['last_reminder_sent' => now()]);
+                    Log::info("Sent {$reminderType} no-trial reminder", [
+                        'customer_id' => $customer->facebook_id,
+                        'reminder_count' => $customer->reminder_count_trial
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error("Error sending reminder to customer", [
+                        'customer_id' => $customer->facebook_id,
+                        'error' => $e->getMessage()
+                    ]);
+                    continue;
                 }
-
-                $customer->increment('reminder_count_trial');
-                $customer->update(['last_reminder_sent' => now()]);
-                Log::info("Sent {$reminderType} no-trial reminder", ['customer_id' => $customer->id]);
             }
 
             Log::info('Trial reminder job completed successfully');
@@ -136,6 +167,7 @@ class TrialReminderJob implements ShouldQueue
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
+            throw $e;
         }
     }
 }
