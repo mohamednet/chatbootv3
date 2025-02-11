@@ -27,137 +27,147 @@ class TrialReminderJob implements ShouldQueue
         try {
             Log::info('Starting trial reminder job');
 
-            // Handle customers who had trials but haven't paid
-            $customersWithTrials = Customer::query()
-                ->where('trial_status', 'Sent')  // Has received a trial
+            // 1. Handle old customers with expired trials (3+ days)
+            $oldExpiredCustomers = Customer::query()
+                ->join('trials', 'trials.assigned_user', '=', 'customers.facebook_id')
+                ->where('customers.trial_status', 'Sent')
                 ->where(function($query) {
-                    $query->whereNull('paid_status')
-                          ->orWhere('paid_status', false);
+                    $query->whereNull('customers.paid_status')
+                          ->orWhere('customers.paid_status', false);
                 })
-                ->where('reminder_count_trial', '<', 3)
+                ->where('trials.created_at', '<=', now()->subDays(3))
                 ->where(function($query) {
-                    $query->whereNull('last_reminder_sent')
-                        ->orWhere(function($q) {
-                            $q->where('reminder_count_trial', 0); // First: Immediate
-                        })
-                        ->orWhere(function($q) {
-                            $q->where('reminder_count_trial', 1)
-                              ->where('last_reminder_sent', '<=', now()->subDays(1)); // Second: 24h delay
-                        })
-                        ->orWhere(function($q) {
-                            $q->where('reminder_count_trial', 2)
-                              ->where('last_reminder_sent', '<=', now()->subDays(2)); // Third: 48h delay
-                        });
+                    $query->whereNull('customers.reminder_count_trial')
+                          ->orWhere('customers.reminder_count_trial', 0);
                 })
+                ->select('customers.*', 'trials.created_at as trial_created_at')
                 ->get();
 
-            Log::info('Found customers with trials:', ['count' => $customersWithTrials->count()]);
-
-            foreach ($customersWithTrials as $customer) {
-                $reminderType = match($customer->reminder_count_trial) {
-                    0 => 'first',
-                    1 => 'second',
-                    2 => 'third'
-                };
-
+            foreach ($oldExpiredCustomers as $customer) {
                 try {
-                    // Send messages
+                    // Send Facebook message
                     $facebookService->sendMessage(
                         $customer->facebook_id,
-                        MessageTemplateService::getTrialTemplate($reminderType, 'facebook')
+                        MessageTemplateService::getTrialTemplate('third', 'facebook')
                     );
 
+                    // Send email
                     if ($customer->email) {
                         Mail::to($customer->email)->send(new TrialReminder(
-                            MessageTemplateService::getTrialTemplate($reminderType, 'email_subject'),
-                            MessageTemplateService::getTrialTemplate($reminderType, 'email_content')
+                            MessageTemplateService::getTrialTemplate('third', 'email_subject'),
+                            MessageTemplateService::getTrialTemplate('third', 'email_content')
                         ));
                     }
 
-                    $customer->increment('reminder_count_trial');
-                    $customer->update(['last_reminder_sent' => now()]);
-                    Log::info("Sent {$reminderType} trial reminder", [
+                    $customer->update([
+                        'reminder_count_trial' => 3,
+                        'last_reminder_sent' => now()
+                    ]);
+
+                    Log::info('Sent third message to old expired trial customer', [
                         'customer_id' => $customer->facebook_id,
-                        'reminder_count' => $customer->reminder_count_trial
+                        'trial_created' => $customer->trial_created_at
                     ]);
                 } catch (\Exception $e) {
-                    Log::error("Error sending reminder to customer", [
+                    Log::error('Error sending third message to old customer', [
                         'customer_id' => $customer->facebook_id,
                         'error' => $e->getMessage()
                     ]);
-                    continue;
                 }
             }
 
-            // Handle customers who never had trials
-            $customersWithoutTrials = Customer::query()
-                ->where('trial_status', 'Not Sent')  // Never had a trial
+            // 2. Handle customers with 3 hours left in trial
+            $customersWithThreeHours = Customer::query()
+                ->join('trials', 'trials.assigned_user', '=', 'customers.facebook_id')
+                ->where('customers.trial_status', 'Sent')
                 ->where(function($query) {
-                    $query->whereNull('paid_status')
-                          ->orWhere('paid_status', false);
+                    $query->whereNull('customers.paid_status')
+                          ->orWhere('customers.paid_status', false);
                 })
-                ->where('reminder_count_trial', '<', 5)
-                ->where(function($query) {
-                    $query->whereNull('last_reminder_sent')
-                        ->orWhere(function($q) {
-                            $q->where('reminder_count_trial', 0); // First: Immediate
-                        })
-                        ->orWhere(function($q) {
-                            $q->where('reminder_count_trial', 1)
-                              ->where('last_reminder_sent', '<=', now()->subDays(1)); // Second: 24h delay
-                        })
-                        ->orWhere(function($q) {
-                            $q->where('reminder_count_trial', 2)
-                              ->where('last_reminder_sent', '<=', now()->subDays(2)); // Third: 48h delay
-                        })
-                        ->orWhere(function($q) {
-                            $q->where('reminder_count_trial', 3)
-                              ->where('last_reminder_sent', '<=', now()->subDays(3)); // Fourth: 72h delay
-                        })
-                        ->orWhere(function($q) {
-                            $q->where('reminder_count_trial', 4)
-                              ->where('last_reminder_sent', '<=', now()->subDays(4)); // Fifth: 96h delay
-                        });
-                })
+                ->where('customers.reminder_count_trial', 0)
+                ->where('trials.created_at', '<=', now()->subHours(21))
+                ->where('trials.created_at', '>', now()->subHours(22))
+                ->select('customers.*', 'trials.created_at as trial_created_at')
                 ->get();
 
-            Log::info('Found customers without trials:', ['count' => $customersWithoutTrials->count()]);
-
-            foreach ($customersWithoutTrials as $customer) {
-                $reminderType = match($customer->reminder_count_trial) {
-                    0 => 'first',
-                    1 => 'second',
-                    2 => 'third',
-                    3 => 'fourth',
-                    4 => 'fifth'
-                };
-
+            foreach ($customersWithThreeHours as $customer) {
                 try {
-                    // Send messages
+                    // Send Facebook message
                     $facebookService->sendMessage(
                         $customer->facebook_id,
-                        MessageTemplateService::getTrialTemplate($reminderType . '_no_trial', 'facebook')
+                        MessageTemplateService::getTrialTemplate('first', 'facebook')
                     );
 
+                    // Send email
                     if ($customer->email) {
                         Mail::to($customer->email)->send(new TrialReminder(
-                            MessageTemplateService::getTrialTemplate($reminderType . '_no_trial', 'email_subject'),
-                            MessageTemplateService::getTrialTemplate($reminderType . '_no_trial', 'email_content')
+                            MessageTemplateService::getTrialTemplate('first', 'email_subject'),
+                            MessageTemplateService::getTrialTemplate('first', 'email_content')
                         ));
                     }
 
-                    $customer->increment('reminder_count_trial');
-                    $customer->update(['last_reminder_sent' => now()]);
-                    Log::info("Sent {$reminderType} no-trial reminder", [
+                    $customer->update([
+                        'reminder_count_trial' => 1,
+                        'last_reminder_sent' => now()
+                    ]);
+
+                    Log::info('Sent first message to customer with 3 hours left', [
                         'customer_id' => $customer->facebook_id,
-                        'reminder_count' => $customer->reminder_count_trial
+                        'trial_created' => $customer->trial_created_at
                     ]);
                 } catch (\Exception $e) {
-                    Log::error("Error sending reminder to customer", [
+                    Log::error('Error sending first message', [
                         'customer_id' => $customer->facebook_id,
                         'error' => $e->getMessage()
                     ]);
-                    continue;
+                }
+            }
+
+            // 3. Handle expired trials (24h)
+            $expiredTrials = Customer::query()
+                ->join('trials', 'trials.assigned_user', '=', 'customers.facebook_id')
+                ->where('customers.trial_status', 'Sent')
+                ->where(function($query) {
+                    $query->whereNull('customers.paid_status')
+                          ->orWhere('customers.paid_status', false);
+                })
+                ->where('customers.reminder_count_trial', 1)
+                ->where('trials.created_at', '<=', now()->subHours(24))
+                ->where('trials.created_at', '>', now()->subDays(3))
+                ->where('customers.last_reminder_sent', '<=', now()->subHours(3))
+                ->select('customers.*', 'trials.created_at as trial_created_at')
+                ->get();
+
+            foreach ($expiredTrials as $customer) {
+                try {
+                    // Send Facebook message
+                    $facebookService->sendMessage(
+                        $customer->facebook_id,
+                        MessageTemplateService::getTrialTemplate('second', 'facebook')
+                    );
+
+                    // Send email
+                    if ($customer->email) {
+                        Mail::to($customer->email)->send(new TrialReminder(
+                            MessageTemplateService::getTrialTemplate('second', 'email_subject'),
+                            MessageTemplateService::getTrialTemplate('second', 'email_content')
+                        ));
+                    }
+
+                    $customer->update([
+                        'reminder_count_trial' => 2,
+                        'last_reminder_sent' => now()
+                    ]);
+
+                    Log::info('Sent second message to expired trial customer', [
+                        'customer_id' => $customer->facebook_id,
+                        'trial_created' => $customer->trial_created_at
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error('Error sending second message', [
+                        'customer_id' => $customer->facebook_id,
+                        'error' => $e->getMessage()
+                    ]);
                 }
             }
 

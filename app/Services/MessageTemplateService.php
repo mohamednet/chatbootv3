@@ -30,7 +30,32 @@ class MessageTemplateService
             'third' => [
                 'facebook' => "🎬 Still missing out on your favorite shows? Your trial ended, but it's not too late! Get full access now with a premium subscription.",
                 'email_subject' => "We Miss You! Get Back to the Best IPTV Experience",
-                'email_content' => "Hi,\n\nIt's been 24 hours since your free trial ended. We noticed you haven't subscribed yet—why wait?\n\n🔥 Get instant access to premium channels, top movies, and exclusive sports.\n🔥 No buffering, no limits—just the best IPTV experience!\n\nRejoin now and don't miss out: " . self::getPageLink() . "\n\nBest,\n" . self::getPageName()
+                'email_content' => "Hi,\n\nIt's been 24 hours since your free trial ended. We noticed you haven't subscribed yet—why wait?\n\n🔥 Get instant access to premium channels, top movies, and exclusive sports.\n🔥 No buffering, no limits—just the best IPTV experience!\n\nRejoin now: " . self::getPageLink() . "\n\nBest,\n" . self::getPageName()
+            ],
+            'first_no_trial' => [
+                'facebook' => "🌟 Ready to experience premium IPTV? Start your journey with us and unlock a world of entertainment!",
+                'email_subject' => "Discover Premium IPTV Entertainment",
+                'email_content' => "Hi,\n\nReady to experience the best in IPTV entertainment? Get started now and enjoy:\n\n🔹 40,000+ channels\n🔹 Ultra-HD streaming\n🔹 24/7 support\n\nStart your premium experience: " . self::getPageLink() . "\n\nBest,\n" . self::getPageName()
+            ],
+            'second_no_trial' => [
+                'facebook' => "📺 Don't miss out on premium entertainment! Join thousands of satisfied customers enjoying the best IPTV service.",
+                'email_subject' => "Premium Entertainment Awaits You",
+                'email_content' => "Hi,\n\nStill thinking about premium IPTV? Here's what you're missing:\n\n🔹 Live sports & events\n🔹 Premium movies & shows\n🔹 Crystal-clear streaming\n\nJoin now: " . self::getPageLink() . "\n\nBest,\n" . self::getPageName()
+            ],
+            'third_no_trial' => [
+                'facebook' => "🎯 Special offer! Get premium IPTV access now and enjoy unlimited entertainment.",
+                'email_subject' => "Special IPTV Offer Just for You",
+                'email_content' => "Hi,\n\nWe've got a special offer just for you! Join now and get:\n\n🔹 Premium channel access\n🔹 HD & 4K quality\n🔹 Instant activation\n\nClaim your offer: " . self::getPageLink() . "\n\nBest,\n" . self::getPageName()
+            ],
+            'fourth_no_trial' => [
+                'facebook' => "🌈 Transform your TV experience with premium IPTV! Join now for unlimited entertainment.",
+                'email_subject' => "Upgrade Your Entertainment Today",
+                'email_content' => "Hi,\n\nYour premium entertainment journey awaits!\n\n🔹 Vast content library\n🔹 Premium sports channels\n🔹 No commitments\n\nStart watching: " . self::getPageLink() . "\n\nBest,\n" . self::getPageName()
+            ],
+            'fifth_no_trial' => [
+                'facebook' => "🎁 Last chance! Don't miss out on our premium IPTV service. Subscribe now!",
+                'email_subject' => "Last Chance for Premium IPTV",
+                'email_content' => "Hi,\n\nThis is your last chance to join our premium IPTV service!\n\n🔹 Unbeatable quality\n🔹 Massive content library\n🔹 24/7 support\n\nJoin now: " . self::getPageLink() . "\n\nBest,\n" . self::getPageName()
             ]
         ];
 
