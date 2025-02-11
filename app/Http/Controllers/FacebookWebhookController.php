@@ -50,6 +50,25 @@ class FacebookWebhookController extends Controller
                 $messagingEvent = $data['entry'][0]['messaging'][0];
                 // Check if this is an echo message (sent from page)
                 if (isset($messagingEvent['message']['is_echo']) && isset($messagingEvent['message']['app_id']) && $messagingEvent['message']['app_id'] != config('services.facebook.app_id')) {
+                    // chech if message  is  *  
+
+                    //change just here
+                    if (isset($messagingEvent['message']['text']) && trim(strtolower($messagingEvent['message']['text'])) === '*') {
+                        Log::info('Switching to AI mode', [
+                            'recipient_id' => $messagingEvent['recipient']['id']
+                        ]);
+                        
+                        $conversation = Conversation::where('facebook_user_id', $messagingEvent['recipient']['id'])->first();
+                        if ($conversation) {
+                            $conversation->response_mode = 'ai';
+                            $conversation->save();
+                            Log::info('Conversation switched to AI mode', [
+                                'conversation_id' => $conversation->id
+                            ]);
+                        }
+                        return;
+                    }
+                    //here
                     return $this->handlePageMessage($messagingEvent);
                 }else if(isset($messagingEvent['message']['is_echo']) && isset($messagingEvent['message']['app_id']) && $messagingEvent['message']['app_id'] == config('services.facebook.app_id')) {
                     return ;
