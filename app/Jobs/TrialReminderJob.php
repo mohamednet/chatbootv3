@@ -33,7 +33,7 @@ class TrialReminderJob implements ShouldQueue
                 throw new \Exception('Facebook service not available');
             }
 
-            // 1. Handle old customers with expired trials (3+ days)
+            // 1. Handle old customers with expired trials (7+ days)
             $oldExpiredQuery = Customer::query()
                 ->join('trials', 'trials.assigned_user', '=', 'customers.facebook_id')
                 ->where('customers.trial_status', 'Sent')
@@ -41,7 +41,7 @@ class TrialReminderJob implements ShouldQueue
                     $query->whereNull('customers.paid_status')
                           ->orWhere('customers.paid_status', false);
                 })
-                ->where('trials.created_at', '<=', now()->subDays(3))
+                ->where('trials.created_at', '<=', now()->subDays(7))
                 ->where(function($query) {
                     $query->whereNull('customers.reminder_count_trial')
                           ->orWhere('customers.reminder_count_trial', 0);
@@ -103,7 +103,7 @@ class TrialReminderJob implements ShouldQueue
                 }
             }
 
-            // 2. Handle customers with 3 hours left in trial
+            // 2. Handle customers with 3 hours left in trial (21 hours old)
             $customersWithThreeHoursQuery = Customer::query()
                 ->join('trials', 'trials.assigned_user', '=', 'customers.facebook_id')
                 ->where('customers.trial_status', 'Sent')
@@ -112,8 +112,8 @@ class TrialReminderJob implements ShouldQueue
                           ->orWhere('customers.paid_status', false);
                 })
                 ->where('customers.reminder_count_trial', 0)
-                ->where('trials.created_at', '<=', now()->subHours(21))
-                ->where('trials.created_at', '>', now()->subHours(22))
+                ->where('trials.created_at', '<=', now()->subHours(3))
+                ->where('trials.created_at', '>', now()->subHours(4))
                 ->where(function($query) {
                     $query->whereNull('customers.last_reminder_sent')
                           ->orWhere('customers.last_reminder_sent', '<=', now()->subHours(3));
@@ -171,7 +171,7 @@ class TrialReminderJob implements ShouldQueue
                 }
             }
 
-            // 3. Handle expired trials (24h)
+            // 3. Handle expired trials (24h-7d)
             $expiredTrialsQuery = Customer::query()
                 ->join('trials', 'trials.assigned_user', '=', 'customers.facebook_id')
                 ->where('customers.trial_status', 'Sent')
@@ -179,8 +179,8 @@ class TrialReminderJob implements ShouldQueue
                     $query->whereNull('customers.paid_status')
                           ->orWhere('customers.paid_status', false);
                 })
-                ->where('trials.created_at', '<=', now()->subHours(24))
-                ->where('trials.created_at', '>', now()->subDays(3))
+                ->where('trials.created_at', '<=', now()->subDays(1))
+                ->where('trials.created_at', '>', now()->subDays(7))
                 ->where(function($query) {
                     $query->whereNull('customers.last_reminder_sent')
                           ->orWhere('customers.last_reminder_sent', '<=', now()->subHours(3));
