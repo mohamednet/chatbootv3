@@ -46,6 +46,10 @@ class TrialReminderJob implements ShouldQueue
                     $query->whereNull('customers.reminder_count_trial')
                           ->orWhere('customers.reminder_count_trial', 0);
                 })
+                ->where(function($query) {
+                    $query->whereNull('customers.last_reminder_sent')
+                          ->orWhere('customers.last_reminder_sent', '<=', now()->subHours(3));
+                })
                 ->select('customers.*', 'trials.created_at as trial_created_at');
 
             Log::info('Old expired trials query:', [
@@ -110,6 +114,10 @@ class TrialReminderJob implements ShouldQueue
                 ->where('customers.reminder_count_trial', 0)
                 ->where('trials.created_at', '<=', now()->subHours(21))
                 ->where('trials.created_at', '>', now()->subHours(22))
+                ->where(function($query) {
+                    $query->whereNull('customers.last_reminder_sent')
+                          ->orWhere('customers.last_reminder_sent', '<=', now()->subHours(3));
+                })
                 ->select('customers.*', 'trials.created_at as trial_created_at');
 
             Log::info('Customers with 3 hours left query:', [
@@ -171,10 +179,12 @@ class TrialReminderJob implements ShouldQueue
                     $query->whereNull('customers.paid_status')
                           ->orWhere('customers.paid_status', false);
                 })
-                ->where('customers.reminder_count_trial', 1)
                 ->where('trials.created_at', '<=', now()->subHours(24))
                 ->where('trials.created_at', '>', now()->subDays(3))
-                ->where('customers.last_reminder_sent', '<=', now()->subHours(3))
+                ->where(function($query) {
+                    $query->whereNull('customers.last_reminder_sent')
+                          ->orWhere('customers.last_reminder_sent', '<=', now()->subHours(3));
+                })
                 ->select('customers.*', 'trials.created_at as trial_created_at');
 
             Log::info('Expired trials query:', [
