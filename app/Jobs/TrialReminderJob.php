@@ -25,10 +25,10 @@ class TrialReminderJob implements ShouldQueue
     public function handle(FacebookService $facebookService)
     {
         try {
-            Log::info('Starting trial reminder job');
+            Log::info('Starting trial reminder job - checking all conditions');
 
             // 1. Handle old customers with expired trials (3+ days)
-            $oldExpiredCustomers = Customer::query()
+            $oldExpiredQuery = Customer::query()
                 ->join('trials', 'trials.assigned_user', '=', 'customers.facebook_id')
                 ->where('customers.trial_status', 'Sent')
                 ->where(function($query) {
@@ -40,11 +40,28 @@ class TrialReminderJob implements ShouldQueue
                     $query->whereNull('customers.reminder_count_trial')
                           ->orWhere('customers.reminder_count_trial', 0);
                 })
-                ->select('customers.*', 'trials.created_at as trial_created_at')
-                ->get();
+                ->select('customers.*', 'trials.created_at as trial_created_at');
+
+            Log::info('Old expired trials query:', [
+                'sql' => $oldExpiredQuery->toSql(),
+                'bindings' => $oldExpiredQuery->getBindings()
+            ]);
+
+            $oldExpiredCustomers = $oldExpiredQuery->get();
+
+            Log::info('Found old expired trial customers:', [
+                'count' => $oldExpiredCustomers->count(),
+                'customer_ids' => $oldExpiredCustomers->pluck('facebook_id')->toArray()
+            ]);
 
             foreach ($oldExpiredCustomers as $customer) {
                 try {
+                    Log::info('Processing old expired trial customer:', [
+                        'customer_id' => $customer->facebook_id,
+                        'trial_created_at' => $customer->trial_created_at,
+                        'reminder_count' => $customer->reminder_count_trial
+                    ]);
+
                     // Send Facebook message
                     $facebookService->sendMessage(
                         $customer->facebook_id,
@@ -77,7 +94,7 @@ class TrialReminderJob implements ShouldQueue
             }
 
             // 2. Handle customers with 3 hours left in trial
-            $customersWithThreeHours = Customer::query()
+            $customersWithThreeHoursQuery = Customer::query()
                 ->join('trials', 'trials.assigned_user', '=', 'customers.facebook_id')
                 ->where('customers.trial_status', 'Sent')
                 ->where(function($query) {
@@ -87,11 +104,28 @@ class TrialReminderJob implements ShouldQueue
                 ->where('customers.reminder_count_trial', 0)
                 ->where('trials.created_at', '<=', now()->subHours(21))
                 ->where('trials.created_at', '>', now()->subHours(22))
-                ->select('customers.*', 'trials.created_at as trial_created_at')
-                ->get();
+                ->select('customers.*', 'trials.created_at as trial_created_at');
+
+            Log::info('Customers with 3 hours left query:', [
+                'sql' => $customersWithThreeHoursQuery->toSql(),
+                'bindings' => $customersWithThreeHoursQuery->getBindings()
+            ]);
+
+            $customersWithThreeHours = $customersWithThreeHoursQuery->get();
+
+            Log::info('Found customers with 3 hours left:', [
+                'count' => $customersWithThreeHours->count(),
+                'customer_ids' => $customersWithThreeHours->pluck('facebook_id')->toArray()
+            ]);
 
             foreach ($customersWithThreeHours as $customer) {
                 try {
+                    Log::info('Processing customer with 3 hours left:', [
+                        'customer_id' => $customer->facebook_id,
+                        'trial_created_at' => $customer->trial_created_at,
+                        'reminder_count' => $customer->reminder_count_trial
+                    ]);
+
                     // Send Facebook message
                     $facebookService->sendMessage(
                         $customer->facebook_id,
@@ -124,7 +158,7 @@ class TrialReminderJob implements ShouldQueue
             }
 
             // 3. Handle expired trials (24h)
-            $expiredTrials = Customer::query()
+            $expiredTrialsQuery = Customer::query()
                 ->join('trials', 'trials.assigned_user', '=', 'customers.facebook_id')
                 ->where('customers.trial_status', 'Sent')
                 ->where(function($query) {
@@ -135,11 +169,28 @@ class TrialReminderJob implements ShouldQueue
                 ->where('trials.created_at', '<=', now()->subHours(24))
                 ->where('trials.created_at', '>', now()->subDays(3))
                 ->where('customers.last_reminder_sent', '<=', now()->subHours(3))
-                ->select('customers.*', 'trials.created_at as trial_created_at')
-                ->get();
+                ->select('customers.*', 'trials.created_at as trial_created_at');
+
+            Log::info('Expired trials query:', [
+                'sql' => $expiredTrialsQuery->toSql(),
+                'bindings' => $expiredTrialsQuery->getBindings()
+            ]);
+
+            $expiredTrials = $expiredTrialsQuery->get();
+
+            Log::info('Found expired trials:', [
+                'count' => $expiredTrials->count(),
+                'customer_ids' => $expiredTrials->pluck('facebook_id')->toArray()
+            ]);
 
             foreach ($expiredTrials as $customer) {
                 try {
+                    Log::info('Processing expired trial customer:', [
+                        'customer_id' => $customer->facebook_id,
+                        'trial_created_at' => $customer->trial_created_at,
+                        'reminder_count' => $customer->reminder_count_trial
+                    ]);
+
                     // Send Facebook message
                     $facebookService->sendMessage(
                         $customer->facebook_id,
