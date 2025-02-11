@@ -110,28 +110,44 @@ class OpenAiService
             $customer = Customer::where('facebook_id', $conversation->facebook_user_id)->first();
 
             // Build customer context
-            $customerContext = " Customer Information:
-                Paid: " . ($customer->paid_status ? "Yes" : "No") 
-                ."\nTrial: ". ($customer->trial_status === 'Sent' ? "Sent" : "Not Sent") 
-                . "\n";
-            
+            $customerContext = "CUSTOMER INFORMATION:\n";
+            if ($customer) {
+                $customerContext .= "Status: " . ($customer->paid_status ? "PAID SUBSCRIBER" : ($customer->trial_status === 'sent' ? "HAD TRIAL" : "NEW USER")) . "\n";
+                $customerContext .= "Trial Status: " . ($customer->trial_status ?? "Not used") . "\n";
+                if ($customer->device) $customerContext .= "Device: " . $customer->device . "\n";
+                if ($customer->app_used) $customerContext .= "App Used: " . $customer->app_used . "\n";
+            } else {
+                $customerContext .= "Status: NEW USER\n";
+            }
+
+            $customerContext .= "\nINSTRUCTIONS BASED ON STATUS:\n";
+            if ($customer && $customer->paid_status) {
+                $customerContext .= "- This is a PAID subscriber - NEVER offer trials\n";
+                $customerContext .= "- Focus on technical support and account management\n";
+            } elseif ($customer && $customer->trial_status === 'sent') {
+                $customerContext .= "- This customer already had a trial - DO NOT offer another trial\n";
+                $customerContext .= "- Focus on converting them to a paid subscription\n";
+            } else {
+                $customerContext .= "- New customer eligible for trial\n";
+                $customerContext .= "- Can offer ONE 24-hour trial\n";
+            }
 
             // Get last 10 messages from conversation history
             $history = Message::where('conversation_id', $conversationId)
-                ->orderBy('created_at', 'desc')  // Get newest first
-                ->take(10)                       // Take only last 10
+                ->orderBy('created_at', 'desc')
+                ->take(10)
                 ->get()
-                ->reverse();                     // Reverse to get chronological order
+                ->reverse();
 
-            // Prepare messages array with conversation history
+            // Prepare messages array with system prompt and customer context
             $messages = [
                 [
                     'role' => 'system',
-                    'content' => $customerContext . "\n---\n" . $this->systemPrompt . "\n\nYOU MUST FOLLOW THESE INSTRUCTIONS EXACTLY:"
+                    'content' => $customerContext . "\n---\n" . $this->systemPrompt
                 ]
             ];
 
-            // Append last 10 messages from conversation history
+            // Add conversation history
             foreach ($history as $msg) {
                 $messages[] = [
                     'role' => $msg->sender_type === 'user' ? 'user' : 'assistant',
@@ -139,19 +155,22 @@ class OpenAiService
                 ];
             }
 
-            // Add current user message if it's not in the last 10
+            // Add current message if not already in history
             if (!$history->contains('content', $message)) {
                 $messages[] = [
                     'role' => 'user',
                     'content' => $message
                 ];
             }
-            // OpenAI API Request
+
+            // OpenAI API Request with stricter parameters
             $response = OpenAI::chat()->create([
                 'model' => 'gpt-3.5-turbo',
                 'messages' => $messages,
                 'max_tokens' => 130,
                 'temperature' => 0.0,
+                'presence_penalty' => 0.6,  // Discourage repetition
+                'frequency_penalty' => 0.3  // Reduce likelihood of repeating same phrases
             ]);
 
             $aiResponse = $response->choices[0]->message->content;
