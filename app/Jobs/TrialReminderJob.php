@@ -27,6 +27,12 @@ class TrialReminderJob implements ShouldQueue
         try {
             Log::info('Starting trial reminder job - checking all conditions');
 
+            // Check if Facebook service is available
+            if (!$facebookService) {
+                Log::error('Facebook service not available');
+                throw new \Exception('Facebook service not available');
+            }
+
             // 1. Handle old customers with expired trials (3+ days)
             $oldExpiredQuery = Customer::query()
                 ->join('trials', 'trials.assigned_user', '=', 'customers.facebook_id')
@@ -224,8 +230,8 @@ class TrialReminderJob implements ShouldQueue
 
             Log::info('Trial reminder job completed successfully');
         } catch (\Exception $e) {
-            Log::error('Error in trial reminder job', [
-                'error' => $e->getMessage(),
+            Log::error('Error in TrialReminderJob: ' . $e->getMessage(), [
+                'exception' => $e,
                 'trace' => $e->getTraceAsString()
             ]);
             throw $e;
