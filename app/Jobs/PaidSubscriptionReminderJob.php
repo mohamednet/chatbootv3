@@ -4,6 +4,8 @@ namespace App\Jobs;
 
 use App\Models\Customer;
 use App\Services\FacebookService;
+use App\Services\MessageTemplateService;
+use App\Mail\TrialReminder;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -34,13 +36,17 @@ class PaidSubscriptionReminderJob implements ShouldQueue
 
             foreach ($sevenDaysCustomers as $customer) {
                 // Send Facebook message
-                // TODO: Add message template
-                $facebookService->sendMessage($customer->facebook_id, 'Seven days reminder template');
+                $facebookService->sendMessage(
+                    $customer->facebook_id,
+                    MessageTemplateService::getPaidTemplate('first', 'facebook')
+                );
 
                 // Send Email
                 if ($customer->email) {
-                    // TODO: Add email template
-                    Mail::to($customer->email)->send('Seven days email template');
+                    Mail::to($customer->email)->send(new TrialReminder(
+                        MessageTemplateService::getPaidTemplate('first', 'email_subject'),
+                        MessageTemplateService::getPaidTemplate('first', 'email_content')
+                    ));
                 }
 
                 $customer->increment('reminder_count_paid');
@@ -57,20 +63,24 @@ class PaidSubscriptionReminderJob implements ShouldQueue
 
             foreach ($twoDaysCustomers as $customer) {
                 // Send Facebook message
-                // TODO: Add message template
-                $facebookService->sendMessage($customer->facebook_id, 'Two days reminder template');
+                $facebookService->sendMessage(
+                    $customer->facebook_id,
+                    MessageTemplateService::getPaidTemplate('second', 'facebook')
+                );
 
                 // Send Email
                 if ($customer->email) {
-                    // TODO: Add email template
-                    Mail::to($customer->email)->send('Two days email template');
+                    Mail::to($customer->email)->send(new TrialReminder(
+                        MessageTemplateService::getPaidTemplate('second', 'email_subject'),
+                        MessageTemplateService::getPaidTemplate('second', 'email_content')
+                    ));
                 }
 
                 $customer->increment('reminder_count_paid');
                 Log::info('Sent 2-day subscription reminder', ['customer_id' => $customer->id]);
             }
 
-            // Third reminder: Just expired
+            // Third reminder: On expiry
             $expiredCustomers = Customer::query()
                 ->where('paid_status', true)
                 ->where('subscription_end_date', '<=', now())
@@ -79,21 +89,25 @@ class PaidSubscriptionReminderJob implements ShouldQueue
 
             foreach ($expiredCustomers as $customer) {
                 // Send Facebook message
-                // TODO: Add message template
-                $facebookService->sendMessage($customer->facebook_id, 'Expired subscription template');
+                $facebookService->sendMessage(
+                    $customer->facebook_id,
+                    MessageTemplateService::getPaidTemplate('third', 'facebook')
+                );
 
                 // Send Email
                 if ($customer->email) {
-                    // TODO: Add email template
-                    Mail::to($customer->email)->send('Expired subscription email template');
+                    Mail::to($customer->email)->send(new TrialReminder(
+                        MessageTemplateService::getPaidTemplate('third', 'email_subject'),
+                        MessageTemplateService::getPaidTemplate('third', 'email_content')
+                    ));
                 }
 
                 $customer->increment('reminder_count_paid');
+                $customer->update(['paid_status' => false]);
                 Log::info('Sent expired subscription reminder', ['customer_id' => $customer->id]);
             }
-
         } catch (\Exception $e) {
-            Log::error('Error in paid subscription reminders', [
+            Log::error('Error in PaidSubscriptionReminderJob', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);

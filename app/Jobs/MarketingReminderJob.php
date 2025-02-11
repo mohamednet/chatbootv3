@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\Customer;
 use App\Services\FacebookService;
+use App\Services\MessageTemplateService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -20,7 +21,7 @@ class MarketingReminderJob implements ShouldQueue
         //
     }
 
-    public function handle(FacebookService $facebookService)
+    public function handle(FacebookService $facebookService, MessageTemplateService $messageTemplateService)
     {
         try {
             $customers = Customer::query()
@@ -29,20 +30,15 @@ class MarketingReminderJob implements ShouldQueue
                 ->where('marketing_reminder_count', '<', 5)
                 ->where(function ($query) {
                     $query->whereNull('last_marketing_message')
-                          ->orWhere('last_marketing_message', '<=', now()->subHours(10));
+                          ->orWhere('last_marketing_message', '<=', now()->subDays(3));
                 })
                 ->get();
 
             foreach ($customers as $customer) {
-                // Get appropriate message based on count
-                $messageTemplate = match($customer->marketing_reminder_count) {
-                    0 => 'First marketing message template',
-                    1 => 'Second marketing message template',
-                    2 => 'Third marketing message template',
-                    3 => 'Fourth marketing message template',
-                    4 => 'Fifth marketing message template',
-                    default => null
-                };
+                // Get message based on count (1-based for templates)
+                $messageTemplate = $messageTemplateService->getMarketingTemplate(
+                    $customer->marketing_reminder_count + 1
+                );
 
                 if ($messageTemplate) {
                     // Send Facebook message
@@ -57,9 +53,9 @@ class MarketingReminderJob implements ShouldQueue
                         $customer->update(['non_disturb' => true]);
                     }
 
-                    Log::info('Sent marketing reminder', [
+                    Log::info('Sent marketing message', [
                         'customer_id' => $customer->id,
-                        'reminder_count' => $customer->marketing_reminder_count
+                        'message_number' => $customer->marketing_reminder_count
                     ]);
                 }
             }

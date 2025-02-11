@@ -14,6 +14,13 @@ return [
     |
     */
 
+    'mailgun' => [
+        'domain' => env('MAILGUN_DOMAIN'),
+        'secret' => env('MAILGUN_SECRET'),
+        'endpoint' => env('MAILGUN_ENDPOINT', 'api.mailgun.net'),
+        'scheme' => 'https',
+    ],
+
     'postmark' => [
         'token' => env('POSTMARK_TOKEN'),
     ],
@@ -37,6 +44,8 @@ return [
 
     'facebook' => [
         'page_access_token' => env('FACEBOOK_PAGE_ACCESS_TOKEN'),
+        'page_link' => env('FACEBOOK_PAGE_LINK', 'https://www.facebook.com/profile.php?id=61566566128719'),
+        'page_name' => env('FACEBOOK_PAGE_NAME', 'PrimeVision'),
         'app_id' => env('FACEBOOK_APP_ID'),
         'webhook_verify_token' => env('FACEBOOK_WEBHOOK_VERIFY_TOKEN'),
     ],
