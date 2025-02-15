@@ -19,7 +19,10 @@ class Kernel extends ConsoleKernel
         $schedule->command('messages:process')->everySecond();
 
         // Run trial reminders every 5 minutes
-        $schedule->job(new \App\Jobs\TrialReminderJob())->everyFiveMinutes();
+        $schedule->call(function () {
+            Log::info('Scheduling TrialReminderJob');
+            dispatch(new \App\Jobs\TrialReminderJob());
+        })->everyFiveMinutes();
 
         // Run marketing reminders every hour
         $schedule->call(function () {
