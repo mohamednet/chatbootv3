@@ -28,8 +28,20 @@ class TrialReminderJob implements ShouldQueue
         Log::info('TrialReminderJob started');
 
         try {
-            Log::info('Starting trial reminder job at: ' . now());
+            $this->processReminders($facebookService);
+        } catch (\Exception $e) {
+            Log::error('Error in TrialReminderJob: ' . $e->getMessage());
+        }
 
+        // Requeue the job to run again in 5 minutes
+        dispatch(new self())->delay(now()->addMinutes(5));
+    }
+
+    private function processReminders($facebookService)
+    {
+        Log::info('Starting trial reminder job at: ' . now());
+
+        try {
             // First reminder: 3 hours or less before trial expiry
             $firstReminderCustomers = Customer::query()
                 ->join('trials', 'trials.assigned_user', '=', 'customers.facebook_id')
