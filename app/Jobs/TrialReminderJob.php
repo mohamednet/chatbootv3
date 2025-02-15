@@ -25,6 +25,8 @@ class TrialReminderJob implements ShouldQueue
 
     public function handle(FacebookService $facebookService)
     {
+        Log::info('TrialReminderJob started');
+
         try {
             Log::info('Starting trial reminder job at: ' . now());
 
@@ -42,10 +44,16 @@ class TrialReminderJob implements ShouldQueue
                 ->select('customers.*', 'trials.created_at as trial_created_at')
                 ->get();
 
-            Log::info('Found first reminder customers:', ['count' => $firstReminderCustomers->count()]);
+            Log::info('First reminder customers found:', ['count' => $firstReminderCustomers->count()]);
 
             foreach ($firstReminderCustomers as $customer) {
                 try {
+                    Log::info('Sending first reminder to customer:', [
+                        'customer_id' => $customer->id,
+                        'facebook_id' => $customer->facebook_id,
+                        'trial_end' => $customer->trial_created_at
+                    ]);
+
                     // Send Facebook message
                     $facebookMessage = "REMINDER:\n" . MessageTemplateService::getTrialTemplate('first', 'facebook');
                     $facebookService->sendMessage(
@@ -88,10 +96,16 @@ class TrialReminderJob implements ShouldQueue
                 ->select('customers.*', 'trials.created_at as trial_created_at')
                 ->get();
 
-            Log::info('Found second reminder customers:', ['count' => $secondReminderCustomers->count()]);
+            Log::info('Second reminder customers found:', ['count' => $secondReminderCustomers->count()]);
 
             foreach ($secondReminderCustomers as $customer) {
                 try {
+                    Log::info('Sending second reminder to customer:', [
+                        'customer_id' => $customer->id,
+                        'facebook_id' => $customer->facebook_id,
+                        'trial_end' => $customer->trial_created_at
+                    ]);
+
                     // Send Facebook message
                     $facebookMessage = "REMINDER:\n" . MessageTemplateService::getTrialTemplate('second', 'facebook');
                     $facebookService->sendMessage(
@@ -136,10 +150,16 @@ class TrialReminderJob implements ShouldQueue
                 ->select('customers.*', 'trials.created_at as trial_created_at')
                 ->get();
 
-            Log::info('Found third reminder customers:', ['count' => $thirdReminderCustomers->count()]);
+            Log::info('Third reminder customers found:', ['count' => $thirdReminderCustomers->count()]);
 
             foreach ($thirdReminderCustomers as $customer) {
                 try {
+                    Log::info('Sending third reminder to customer:', [
+                        'customer_id' => $customer->id,
+                        'facebook_id' => $customer->facebook_id,
+                        'trial_end' => $customer->trial_created_at
+                    ]);
+
                     $fbMessageSent = false;
                     $emailSent = false;
                     
