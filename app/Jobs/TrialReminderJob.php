@@ -138,27 +138,46 @@ class TrialReminderJob implements ShouldQueue
 
             foreach ($thirdReminderCustomers as $customer) {
                 try {
-                    // Send Facebook message
-                    $facebookService->sendMessage(
-                        $customer->facebook_id,
-                        MessageTemplateService::getTrialTemplate('third', 'facebook')
-                    );
-
-                    // Send email if available
-                    if ($customer->email) {
-                        Mail::to($customer->email)->send(new TrialReminder(
-                            MessageTemplateService::getTrialTemplate('third', 'email_subject'),
-                            MessageTemplateService::getTrialTemplate('third', 'email_content')
-                        ));
+                    $fbMessageSent = false;
+                    $emailSent = false;
+                    
+                    // Try to send Facebook message
+                    try {
+                        $fbMessageSent = $facebookService->sendMessage(
+                            $customer->facebook_id,
+                            MessageTemplateService::getTrialTemplate('third', 'facebook')
+                        );
+                    } catch (\Exception $e) {
+                        Log::error('Error sending Facebook message in third reminder', [
+                            'customer_id' => $customer->facebook_id,
+                            'error' => $e->getMessage()
+                        ]);
                     }
 
-                    // Update reminder count to 3
-                    $customer->reminder_count_trial = 3;
-                    $customer->save();
+                    // Try to send email if available
+                    if ($customer->email) {
+                        try {
+                            Mail::to($customer->email)->send(new TrialReminder(
+                                MessageTemplateService::getTrialTemplate('third', 'email_subject'),
+                                MessageTemplateService::getTrialTemplate('third', 'email_content')
+                            ));
+                            $emailSent = true;
+                        } catch (\Exception $e) {
+                            Log::error('Error sending email in third reminder', [
+                                'customer_id' => $customer->facebook_id,
+                                'error' => $e->getMessage()
+                            ]);
+                        }
+                    }
 
-                    Log::info('Sent third reminder', ['customer_id' => $customer->facebook_id]);
+                    // Update reminder count to 3 only if both messages were sent successfully
+                    if ($fbMessageSent && $emailSent) {
+                        $customer->reminder_count_trial = 3;
+                        $customer->save();
+                        Log::info('Sent third reminder (both FB and email)', ['customer_id' => $customer->facebook_id]);
+                    }
                 } catch (\Exception $e) {
-                    Log::error('Error sending third reminder', [
+                    Log::error('Error in third reminder process', [
                         'customer_id' => $customer->facebook_id,
                         'error' => $e->getMessage()
                     ]);
