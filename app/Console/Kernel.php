@@ -18,11 +18,8 @@ class Kernel extends ConsoleKernel
         // Run every second to check for messages to process
         $schedule->command('messages:process')->everySecond();
 
-        // Run trial reminders every hour
-        $schedule->call(function () {
-            Log::info('Scheduling TrialReminderJob');
-            dispatch(new \App\Jobs\TrialReminderJob());
-        })->hourly();
+        // Run trial reminders every 5 minutes
+        $schedule->job(new \App\Jobs\TrialReminderJob())->everyFiveMinutes();
 
         // Run marketing reminders every hour
         $schedule->call(function () {
@@ -30,8 +27,8 @@ class Kernel extends ConsoleKernel
             dispatch(new \App\Jobs\MarketingReminderJob());
         })->hourly();
 
-        // Reminder Jobs
-        $schedule->job(new PaidSubscriptionReminderJob)->hourly();
+        // Run paid subscription reminders every hour
+        $schedule->job(new \App\Jobs\PaidSubscriptionReminderJob)->hourly();
     }
 
     protected function commands()
