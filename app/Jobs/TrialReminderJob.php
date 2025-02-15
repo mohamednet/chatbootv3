@@ -47,9 +47,10 @@ class TrialReminderJob implements ShouldQueue
             foreach ($firstReminderCustomers as $customer) {
                 try {
                     // Send Facebook message
+                    $facebookMessage = "REMINDER:\n" . MessageTemplateService::getTrialTemplate('first', 'facebook');
                     $facebookService->sendMessage(
                         $customer->facebook_id,
-                        MessageTemplateService::getTrialTemplate('first', 'facebook')
+                        $facebookMessage
                     );
 
                     // Send email if available
@@ -92,9 +93,10 @@ class TrialReminderJob implements ShouldQueue
             foreach ($secondReminderCustomers as $customer) {
                 try {
                     // Send Facebook message
+                    $facebookMessage = "REMINDER:\n" . MessageTemplateService::getTrialTemplate('second', 'facebook');
                     $facebookService->sendMessage(
                         $customer->facebook_id,
-                        MessageTemplateService::getTrialTemplate('second', 'facebook')
+                        $facebookMessage
                     );
 
                     // Send email if available
@@ -143,9 +145,10 @@ class TrialReminderJob implements ShouldQueue
                     
                     // Try to send Facebook message
                     try {
+                        $facebookMessage = "REMINDER:\n" . MessageTemplateService::getTrialTemplate('third', 'facebook');
                         $fbMessageSent = $facebookService->sendMessage(
                             $customer->facebook_id,
-                            MessageTemplateService::getTrialTemplate('third', 'facebook')
+                            $facebookMessage
                         );
                     } catch (\Exception $e) {
                         Log::error('Error sending Facebook message in third reminder', [
