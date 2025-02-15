@@ -11,6 +11,7 @@ class Kernel extends ConsoleKernel
     protected $commands = [
         Commands\ProcessMessages::class,
         Commands\TestOpenAI::class,
+        Commands\ProcessTrialReminders::class,
     ];
 
     protected function schedule(Schedule $schedule): void
@@ -19,10 +20,9 @@ class Kernel extends ConsoleKernel
         $schedule->command('messages:process')->everySecond();
 
         // Run trial reminders every 5 minutes
-        $schedule->call(function () {
-            Log::info('Scheduling TrialReminderJob');
-            dispatch(new \App\Jobs\TrialReminderJob());
-        })->everyFiveMinutes();
+        $schedule->command('trials:process-reminders')
+            ->everyFiveMinutes()
+            ->appendOutputTo(storage_path('logs/trial-reminders.log'));
 
         // Run marketing reminders every hour
         $schedule->call(function () {
