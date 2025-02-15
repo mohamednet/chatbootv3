@@ -7,6 +7,8 @@ use App\Models\Customer;
 use App\Services\FacebookService;
 use App\Services\MessageTemplateService;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\TrialReminder;
 
 class ProcessTrialReminders extends Command
 {
@@ -21,16 +23,27 @@ class ProcessTrialReminders extends Command
             // First reminder: 3 hours or less before trial expiry
             $firstReminderCustomers = Customer::query()
                 ->join('trials', 'trials.assigned_user', '=', 'customers.facebook_id')
+                ->where('customers.trial_status', 'Sent')
+                ->where(function($query) {
+                    $query->whereNull('customers.paid_status')
+                          ->orWhere('customers.paid_status', false);
+                })
+                ->where('customers.reminder_count_trial', 0)
                 ->where('trials.created_at', '<=', now()->subHours(21))
                 ->where('trials.created_at', '>', now()->subHours(24))
-                ->where('customers.reminder_count_trial', 0)
                 ->select('customers.*', 'trials.created_at as trial_created_at')
                 ->get();
 
-            Log::info('Found customers for first reminder:', ['count' => $firstReminderCustomers->count()]);
+            Log::info('First reminder customers found:', ['count' => $firstReminderCustomers->count()]);
 
             foreach ($firstReminderCustomers as $customer) {
                 try {
+                    Log::info('Sending first reminder to customer:', [
+                        'customer_id' => $customer->id,
+                        'facebook_id' => $customer->facebook_id,
+                        'trial_end' => $customer->trial_created_at
+                    ]);
+
                     // Send Facebook message
                     $facebookMessage = "REMINDER:\n" . MessageTemplateService::getTrialTemplate('first', 'facebook');
                     $facebookService->sendMessage(
@@ -38,35 +51,51 @@ class ProcessTrialReminders extends Command
                         $facebookMessage
                     );
 
+                    // Send email if available
+                    if ($customer->email) {
+                        Mail::to($customer->email)->send(new TrialReminder(
+                            MessageTemplateService::getTrialTemplate('first', 'email_subject'),
+                            MessageTemplateService::getTrialTemplate('first', 'email_content')
+                        ));
+                    }
+
                     // Update reminder count
                     $customer->reminder_count_trial = 1;
                     $customer->save();
 
-                    Log::info('First reminder sent successfully', [
-                        'customer_id' => $customer->id,
-                        'facebook_id' => $customer->facebook_id
-                    ]);
+                    Log::info('Sent first reminder', ['customer_id' => $customer->facebook_id]);
                 } catch (\Exception $e) {
                     Log::error('Error sending first reminder', [
-                        'customer_id' => $customer->id,
+                        'customer_id' => $customer->facebook_id,
                         'error' => $e->getMessage()
                     ]);
                 }
             }
 
-            // Second reminder: 1-24 hours after trial expiry
+            // Second reminder: between 1h and 24h after trial expiry
             $secondReminderCustomers = Customer::query()
                 ->join('trials', 'trials.assigned_user', '=', 'customers.facebook_id')
-                ->where('trials.created_at', '<=', now()->subHours(48))
-                ->where('trials.created_at', '>', now()->subHours(72))
+                ->where('customers.trial_status', 'Sent')
+                ->where(function($query) {
+                    $query->whereNull('customers.paid_status')
+                          ->orWhere('customers.paid_status', false);
+                })
                 ->where('customers.reminder_count_trial', 1)
+                ->where('trials.created_at', '<=', now()->subHours(25))
+                ->where('trials.created_at', '>', now()->subHours(48))
                 ->select('customers.*', 'trials.created_at as trial_created_at')
                 ->get();
 
-            Log::info('Found customers for second reminder:', ['count' => $secondReminderCustomers->count()]);
+            Log::info('Second reminder customers found:', ['count' => $secondReminderCustomers->count()]);
 
             foreach ($secondReminderCustomers as $customer) {
                 try {
+                    Log::info('Sending second reminder to customer:', [
+                        'customer_id' => $customer->id,
+                        'facebook_id' => $customer->facebook_id,
+                        'trial_end' => $customer->trial_created_at
+                    ]);
+
                     // Send Facebook message
                     $facebookMessage = "REMINDER:\n" . MessageTemplateService::getTrialTemplate('second', 'facebook');
                     $facebookService->sendMessage(
@@ -74,52 +103,95 @@ class ProcessTrialReminders extends Command
                         $facebookMessage
                     );
 
+                    // Send email if available
+                    if ($customer->email) {
+                        Mail::to($customer->email)->send(new TrialReminder(
+                            MessageTemplateService::getTrialTemplate('second', 'email_subject'),
+                            MessageTemplateService::getTrialTemplate('second', 'email_content')
+                        ));
+                    }
+
                     // Update reminder count
                     $customer->reminder_count_trial = 2;
                     $customer->save();
 
-                    Log::info('Second reminder sent successfully', [
-                        'customer_id' => $customer->id,
-                        'facebook_id' => $customer->facebook_id
-                    ]);
+                    Log::info('Sent second reminder', ['customer_id' => $customer->facebook_id]);
                 } catch (\Exception $e) {
                     Log::error('Error sending second reminder', [
-                        'customer_id' => $customer->id,
+                        'customer_id' => $customer->facebook_id,
                         'error' => $e->getMessage()
                     ]);
                 }
             }
 
-            // Third reminder: 2+ days after trial expiry
+            // Third reminder: 2+ days after trial expiry OR never reminded
             $thirdReminderCustomers = Customer::query()
                 ->join('trials', 'trials.assigned_user', '=', 'customers.facebook_id')
-                ->where('trials.created_at', '<=', now()->subDays(3))
-                ->whereIn('customers.reminder_count_trial', [0, 2])
+                ->where('trials.created_at', '<', now()->subHours(32))
+                ->where('customers.trial_status', 'Sent')
+                ->where(function($query) {
+                    $query->whereNull('customers.paid_status')
+                          ->orWhere('customers.paid_status', false);
+                })
+                ->where(function($query) {
+                    $query->where('customers.reminder_count_trial', 2)
+                          ->orWhere('customers.reminder_count_trial', 0);
+                })
                 ->select('customers.*', 'trials.created_at as trial_created_at')
                 ->get();
 
-            Log::info('Found customers for third reminder:', ['count' => $thirdReminderCustomers->count()]);
+            Log::info('Third reminder customers found:', ['count' => $thirdReminderCustomers->count()]);
 
             foreach ($thirdReminderCustomers as $customer) {
                 try {
-                    // Send Facebook message
-                    $facebookMessage = "REMINDER:\n" . MessageTemplateService::getTrialTemplate('third', 'facebook');
-                    $facebookService->sendMessage(
-                        $customer->facebook_id,
-                        $facebookMessage
-                    );
-
-                    // Update reminder count
-                    $customer->reminder_count_trial = 3;
-                    $customer->save();
-
-                    Log::info('Third reminder sent successfully', [
+                    Log::info('Sending third reminder to customer:', [
                         'customer_id' => $customer->id,
-                        'facebook_id' => $customer->facebook_id
+                        'facebook_id' => $customer->facebook_id,
+                        'trial_end' => $customer->trial_created_at
                     ]);
+
+                    $fbMessageSent = false;
+                    $emailSent = false;
+                    
+                    // Try to send Facebook message
+                    try {
+                        $facebookMessage = "REMINDER:\n" . MessageTemplateService::getTrialTemplate('third', 'facebook');
+                        $fbMessageSent = $facebookService->sendMessage(
+                            $customer->facebook_id,
+                            $facebookMessage
+                        );
+                    } catch (\Exception $e) {
+                        Log::error('Error sending Facebook message in third reminder', [
+                            'customer_id' => $customer->facebook_id,
+                            'error' => $e->getMessage()
+                        ]);
+                    }
+
+                    // Try to send email if available
+                    if ($customer->email) {
+                        try {
+                            Mail::to($customer->email)->send(new TrialReminder(
+                                MessageTemplateService::getTrialTemplate('third', 'email_subject'),
+                                MessageTemplateService::getTrialTemplate('third', 'email_content')
+                            ));
+                            $emailSent = true;
+                        } catch (\Exception $e) {
+                            Log::error('Error sending email in third reminder', [
+                                'customer_id' => $customer->facebook_id,
+                                'error' => $e->getMessage()
+                            ]);
+                        }
+                    }
+
+                    // Update reminder count to 3 only if both messages were sent successfully
+                    if ($fbMessageSent && $emailSent) {
+                        $customer->reminder_count_trial = 3;
+                        $customer->save();
+                        Log::info('Sent third reminder (both FB and email)', ['customer_id' => $customer->facebook_id]);
+                    }
                 } catch (\Exception $e) {
-                    Log::error('Error sending third reminder', [
-                        'customer_id' => $customer->id,
+                    Log::error('Error in third reminder process', [
+                        'customer_id' => $customer->facebook_id,
                         'error' => $e->getMessage()
                     ]);
                 }
