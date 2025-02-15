@@ -7,8 +7,10 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SSEController;
 use App\Http\Controllers\SubscriptionController;
 use App\Http\Controllers\TrialController;
+use App\Jobs\TrialReminderJob;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 
 // Facebook Webhook Routes
 Route::get('/webhook', [FacebookWebhookController::class, 'verify'])->withoutMiddleware(['web']);
@@ -69,6 +71,13 @@ Route::middleware(['web'])->group(function () {
         } catch (\Exception $e) {
             return 'Email error: ' . $e->getMessage();
         }
+    });
+
+    // Test route for trial reminder
+    Route::get('/test-reminder', function() {
+        Log::info('Manually dispatching TrialReminderJob');
+        dispatch(new TrialReminderJob());
+        return "TrialReminderJob dispatched - check logs";
     });
 });
 
