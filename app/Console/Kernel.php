@@ -21,8 +21,7 @@ class Kernel extends ConsoleKernel
 
         // Run trial reminders every 5 minutes
         $schedule->command('trials:process-reminders')
-            ->everyFiveMinutes()
-            ->appendOutputTo(storage_path('logs/trial-reminders.log'));
+            ->everyFiveMinutes();
 
         // Run marketing reminders every hour
         $schedule->call(function () {
