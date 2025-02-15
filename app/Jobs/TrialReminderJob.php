@@ -118,9 +118,10 @@ class TrialReminderJob implements ShouldQueue
                 }
             }
 
-            // Third reminder: 2+ days after trial expiry
+            // Third reminder: 2+ days after trial expiry OR never reminded
             $thirdReminderCustomers = Customer::query()
                 ->join('trials', 'trials.assigned_user', '=', 'customers.facebook_id')
+                ->where('trials.created_at', '<', now()->subHours(32))
                 ->where('customers.trial_status', 'Sent')
                 ->where(function($query) {
                     $query->whereNull('customers.paid_status')
@@ -130,7 +131,6 @@ class TrialReminderJob implements ShouldQueue
                     $query->where('customers.reminder_count_trial', 2)
                           ->orWhere('customers.reminder_count_trial', 0);
                 })
-                ->where('trials.created_at', '<', now()->subHours(48))
                 ->select('customers.*', 'trials.created_at as trial_created_at')
                 ->get();
 
@@ -152,7 +152,7 @@ class TrialReminderJob implements ShouldQueue
                         ));
                     }
 
-                    // Update reminder count
+                    // Update reminder count to 3
                     $customer->reminder_count_trial = 3;
                     $customer->save();
 

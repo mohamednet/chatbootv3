@@ -29,7 +29,7 @@ class FacebookService
                     'error' => $response->json(),
                     'status' => $response->status()
                 ]);
-                return;
+                throw new \Exception('Failed to send Facebook message: ' . json_encode($response->json()));
             }
 
             Log::info('Facebook message sent successfully', [
@@ -40,6 +40,7 @@ class FacebookService
                 'facebook_id' => $facebookId,
                 'error' => $e->getMessage()
             ]);
+            throw $e;
         }
     }
 }
