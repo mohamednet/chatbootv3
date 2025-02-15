@@ -26,7 +26,7 @@ class TrialReminderJob implements ShouldQueue
     public function handle(FacebookService $facebookService)
     {
         try {
-            Log::info('Starting trial reminder job');
+            Log::info('Starting trial reminder job at: ' . now());
 
             // First reminder: 3 hours or less before trial expiry
             $firstReminderCustomers = Customer::query()
@@ -41,6 +41,8 @@ class TrialReminderJob implements ShouldQueue
                 ->where('trials.created_at', '>', now()->subHours(24))
                 ->select('customers.*', 'trials.created_at as trial_created_at')
                 ->get();
+
+            Log::info('Found first reminder customers:', ['count' => $firstReminderCustomers->count()]);
 
             foreach ($firstReminderCustomers as $customer) {
                 try {
@@ -84,6 +86,8 @@ class TrialReminderJob implements ShouldQueue
                 ->where('trials.created_at', '>', now()->subHours(48))
                 ->select('customers.*', 'trials.created_at as trial_created_at')
                 ->get();
+
+            Log::info('Found second reminder customers:', ['count' => $secondReminderCustomers->count()]);
 
             foreach ($secondReminderCustomers as $customer) {
                 try {
@@ -129,6 +133,8 @@ class TrialReminderJob implements ShouldQueue
                 ->where('trials.created_at', '<', now()->subHours(48))
                 ->select('customers.*', 'trials.created_at as trial_created_at')
                 ->get();
+
+            Log::info('Found third reminder customers:', ['count' => $thirdReminderCustomers->count()]);
 
             foreach ($thirdReminderCustomers as $customer) {
                 try {
