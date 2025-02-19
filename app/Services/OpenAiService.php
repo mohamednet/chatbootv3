@@ -93,8 +93,8 @@ class OpenAiService
     ---
 
     ### Important Rules (DO NOT IGNORE THESE)
-
-    - Do NOT send login details before email confirmation.
+    - If the user wants a free trial, ask them to provide their email. Only confirm that the email was sent if the user provides a valid email address. If they say 'done' or 'cancel,' do not assume an email has been
+    - Do NOT send login details before email confirmation detected in the convertation .
     - Do NOT offer a second trial (check Customer Informationomer if trial status is not sent or not paid THATS mean customer is new offre trial only to the new customers).
     - Do NOT give the subscription price unless the customer asks.
     - Correct any device name errors automatically.
@@ -165,7 +165,7 @@ class OpenAiService
 
             // OpenAI API Request with stricter parameters
             $response = OpenAI::chat()->create([
-                'model' => 'gpt-3.5-turbo',
+                'model' => 'gpt-4o-mini',
                 'messages' => $messages,
                 'max_tokens' => 130,
                 'temperature' => 0.0,

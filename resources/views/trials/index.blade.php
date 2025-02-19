@@ -110,27 +110,10 @@
                             @csrf
                             <div class="space-y-5">
                                 <div>
-                                    <label for="username" class="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Username</label>
-                                    <input type="text" name="username" id="username" required
-                                        class="block w-full px-4 py-2.5 text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent">
-                                </div>
-
-                                <div>
-                                    <label for="password" class="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Password</label>
-                                    <input type="text" name="password" id="password" required
-                                        class="block w-full px-4 py-2.5 text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent">
-                                </div>
-
-                                <div>
-                                    <label for="url" class="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">URL</label>
-                                    <input type="text" name="url" id="url" required
-                                        class="block w-full px-4 py-2.5 text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent">
-                                </div>
-
-                                <div>
                                     <label for="m3u_link" class="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">M3U Link</label>
-                                    <input type="text" name="m3u_link" id="m3u_link" required
+                                    <input type="text" name="m3u_link" id="m3u_link" required placeholder="Enter your M3U link here"
                                         class="block w-full px-4 py-2.5 text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 focus:border-transparent">
+                                    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Example: http://example.com/get.php?username=test&password=123&type=m3u_plus&output=ts</p>
                                 </div>
                             </div>
 
