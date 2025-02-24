@@ -18,6 +18,12 @@ class FacebookService
     public function sendMessage(string $facebookId, string $message): bool
     {
         try {
+            // Log attempt to send message
+            Log::channel('trial-reminders')->info('Attempting to send message', [
+                'facebook_id' => $facebookId,
+                'message_length' => strlen($message)
+            ]);
+
             $response = Http::post("https://graph.facebook.com/v18.0/me/messages", [
                 'recipient' => ['id' => $facebookId],
                 'message' => ['text' => $message],
