@@ -17,7 +17,8 @@ class ProcessTrialReminders extends Command
 
     public function handle(FacebookService $facebookService)
     {
-        Log::info('Trial reminder process running at: ' . now());
+        $startTime = microtime(true);
+        Log::channel('trial-reminders')->info('Trial reminder process running at: ' . now());
 
         try {
             // First reminder: 3 hours or less before trial expiry
@@ -34,11 +35,11 @@ class ProcessTrialReminders extends Command
                 ->select('customers.*', 'trials.created_at as trial_created_at')
                 ->get();
 
-            Log::info('First reminder customers found:', ['count' => $firstReminderCustomers->count()]);
+            Log::channel('trial-reminders')->info('First reminder customers found:', ['count' => $firstReminderCustomers->count()]);
 
             foreach ($firstReminderCustomers as $customer) {
                 try {
-                    Log::info('Sending first reminder to customer:', [
+                    Log::channel('trial-reminders')->info('Sending first reminder to customer:', [
                         'customer_id' => $customer->id,
                         'facebook_id' => $customer->facebook_id,
                         'trial_end' => $customer->trial_created_at
@@ -63,9 +64,9 @@ class ProcessTrialReminders extends Command
                     $customer->reminder_count_trial = 1;
                     $customer->save();
 
-                    Log::info('Sent first reminder', ['customer_id' => $customer->facebook_id]);
+                    Log::channel('trial-reminders')->info('Sent first reminder', ['customer_id' => $customer->facebook_id]);
                 } catch (\Exception $e) {
-                    Log::error('Error sending first reminder', [
+                    Log::channel('trial-reminders')->error('Error sending first reminder', [
                         'customer_id' => $customer->facebook_id,
                         'error' => $e->getMessage()
                     ]);
@@ -86,11 +87,11 @@ class ProcessTrialReminders extends Command
                 ->select('customers.*', 'trials.created_at as trial_created_at')
                 ->get();
 
-            Log::info('Second reminder customers found:', ['count' => $secondReminderCustomers->count()]);
+            Log::channel('trial-reminders')->info('Second reminder customers found:', ['count' => $secondReminderCustomers->count()]);
 
             foreach ($secondReminderCustomers as $customer) {
                 try {
-                    Log::info('Sending second reminder to customer:', [
+                    Log::channel('trial-reminders')->info('Sending second reminder to customer:', [
                         'customer_id' => $customer->id,
                         'facebook_id' => $customer->facebook_id,
                         'trial_end' => $customer->trial_created_at
@@ -115,9 +116,9 @@ class ProcessTrialReminders extends Command
                     $customer->reminder_count_trial = 2;
                     $customer->save();
 
-                    Log::info('Sent second reminder', ['customer_id' => $customer->facebook_id]);
+                    Log::channel('trial-reminders')->info('Sent second reminder', ['customer_id' => $customer->facebook_id]);
                 } catch (\Exception $e) {
-                    Log::error('Error sending second reminder', [
+                    Log::channel('trial-reminders')->error('Error sending second reminder', [
                         'customer_id' => $customer->facebook_id,
                         'error' => $e->getMessage()
                     ]);
@@ -140,11 +141,11 @@ class ProcessTrialReminders extends Command
                 ->select('customers.*', 'trials.created_at as trial_created_at')
                 ->get();
 
-            Log::info('Third reminder customers found:', ['count' => $thirdReminderCustomers->count()]);
+            Log::channel('trial-reminders')->info('Third reminder customers found:', ['count' => $thirdReminderCustomers->count()]);
 
             foreach ($thirdReminderCustomers as $customer) {
                 try {
-                    Log::info('Sending third reminder to customer:', [
+                    Log::channel('trial-reminders')->info('Sending third reminder to customer:', [
                         'customer_id' => $customer->id,
                         'facebook_id' => $customer->facebook_id,
                         'trial_end' => $customer->trial_created_at
@@ -161,7 +162,7 @@ class ProcessTrialReminders extends Command
                             $facebookMessage
                         );
                     } catch (\Exception $e) {
-                        Log::error('Error sending Facebook message in third reminder', [
+                        Log::channel('trial-reminders')->error('Error sending Facebook message in third reminder', [
                             'customer_id' => $customer->facebook_id,
                             'error' => $e->getMessage()
                         ]);
@@ -176,7 +177,7 @@ class ProcessTrialReminders extends Command
                             ));
                             $emailSent = true;
                         } catch (\Exception $e) {
-                            Log::error('Error sending email in third reminder', [
+                            Log::channel('trial-reminders')->error('Error sending email in third reminder', [
                                 'customer_id' => $customer->facebook_id,
                                 'error' => $e->getMessage()
                             ]);
@@ -187,24 +188,37 @@ class ProcessTrialReminders extends Command
                     if ($fbMessageSent && $emailSent) {
                         $customer->reminder_count_trial = 3;
                         $customer->save();
-                        Log::info('Sent third reminder (both FB and email)', ['customer_id' => $customer->facebook_id]);
+                        Log::channel('trial-reminders')->info('Sent third reminder (both FB and email)', ['customer_id' => $customer->facebook_id]);
                     }
                 } catch (\Exception $e) {
-                    Log::error('Error in third reminder process', [
+                    Log::channel('trial-reminders')->error('Error in third reminder process', [
                         'customer_id' => $customer->facebook_id,
                         'error' => $e->getMessage()
                     ]);
                 }
             }
 
-            Log::info('Trial reminder process completed', [
-                'first_reminders' => $firstReminderCustomers->count(),
-                'second_reminders' => $secondReminderCustomers->count(),
-                'third_reminders' => $thirdReminderCustomers->count()
-            ]);
-
+            // Add monitoring metrics at the end
+            if (app()->environment('production')) {
+                $metrics = [
+                    'first_reminders' => $firstReminderCustomers->count(),
+                    'second_reminders' => $secondReminderCustomers->count(),
+                    'third_reminders' => $thirdReminderCustomers->count(),
+                    'execution_time' => microtime(true) - $startTime,
+                    'memory_usage' => memory_get_peak_usage(true) / 1024 / 1024 . 'MB'
+                ];
+                
+                Log::channel('trial-reminders')->info('Trial reminders metrics', $metrics);
+                
+                if ($metrics['execution_time'] > 30) {
+                    Log::channel('slack')->warning('Trial reminder process took longer than expected', $metrics);
+                }
+            }
         } catch (\Exception $e) {
-            Log::error('Error in trial reminder process: ' . $e->getMessage());
+            if (app()->environment('production')) {
+                Log::channel('slack')->error('Trial reminder process failed: ' . $e->getMessage());
+            }
+            throw $e;
         }
     }
 }
