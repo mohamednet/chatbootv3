@@ -151,6 +151,7 @@ class ProcessTrialReminders extends Command
                     $query->where('customers.reminder_count_trial', 2)
                           ->orWhere('customers.reminder_count_trial', 0);
                 })
+                ->where('customers.facebook_messages_disabled', '=', 0)  // Skip customers who have blocked messages
                 ->select('customers.*', 'trials.created_at as trial_created_at');
             
             // Debug log the query
