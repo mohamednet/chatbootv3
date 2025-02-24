@@ -32,6 +32,7 @@ class ProcessTrialReminders extends Command
                 ->where('customers.reminder_count_trial', 0)
                 ->where('trials.created_at', '<=', now()->subHours(21))
                 ->where('trials.created_at', '>', now()->subHours(24))
+                ->where('customers.facebook_messages_disabled', false)  // Skip customers who have blocked messages
                 ->select('customers.*', 'trials.created_at as trial_created_at')
                 ->get();
 
@@ -84,6 +85,7 @@ class ProcessTrialReminders extends Command
                 ->where('customers.reminder_count_trial', 1)
                 ->where('trials.created_at', '<=', now()->subHours(25))
                 ->where('trials.created_at', '>', now()->subHours(48))
+                ->where('customers.facebook_messages_disabled', false)  // Skip customers who have blocked messages
                 ->select('customers.*', 'trials.created_at as trial_created_at')
                 ->get();
 
