@@ -9,6 +9,7 @@ use App\Services\MessageTemplateService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\TrialReminder;
+use Illuminate\Support\Facades\DB;
 
 class ProcessTrialReminders extends Command
 {
@@ -33,8 +34,13 @@ class ProcessTrialReminders extends Command
                 ->where('trials.created_at', '<=', now()->subHours(21))
                 ->where('trials.created_at', '>', now()->subHours(24))
                 ->where('customers.facebook_messages_disabled', '=', 0)  // Skip customers who have blocked messages
-                ->select('customers.*', 'trials.created_at as trial_created_at')
-                ->get();
+                ->select('customers.*', 'trials.created_at as trial_created_at');
+            
+            // Debug log the query
+            Log::channel('trial-reminders')->info('First reminder query: ' . $firstReminderCustomers->toSql());
+            Log::channel('trial-reminders')->info('First reminder bindings: ' . json_encode($firstReminderCustomers->getBindings()));
+            
+            $firstReminderCustomers = $firstReminderCustomers->get();
 
             Log::channel('trial-reminders')->info('First reminder customers found:', ['count' => $firstReminderCustomers->count()]);
 
@@ -86,8 +92,13 @@ class ProcessTrialReminders extends Command
                 ->where('trials.created_at', '<=', now()->subHours(25))
                 ->where('trials.created_at', '>', now()->subHours(48))
                 ->where('customers.facebook_messages_disabled', '=', 0)  // Skip customers who have blocked messages
-                ->select('customers.*', 'trials.created_at as trial_created_at')
-                ->get();
+                ->select('customers.*', 'trials.created_at as trial_created_at');
+            
+            // Debug log the query
+            Log::channel('trial-reminders')->info('Second reminder query: ' . $secondReminderCustomers->toSql());
+            Log::channel('trial-reminders')->info('Second reminder bindings: ' . json_encode($secondReminderCustomers->getBindings()));
+            
+            $secondReminderCustomers = $secondReminderCustomers->get();
 
             Log::channel('trial-reminders')->info('Second reminder customers found:', ['count' => $secondReminderCustomers->count()]);
 
@@ -140,8 +151,13 @@ class ProcessTrialReminders extends Command
                     $query->where('customers.reminder_count_trial', 2)
                           ->orWhere('customers.reminder_count_trial', 0);
                 })
-                ->select('customers.*', 'trials.created_at as trial_created_at')
-                ->get();
+                ->select('customers.*', 'trials.created_at as trial_created_at');
+            
+            // Debug log the query
+            Log::channel('trial-reminders')->info('Third reminder query: ' . $thirdReminderCustomers->toSql());
+            Log::channel('trial-reminders')->info('Third reminder bindings: ' . json_encode($thirdReminderCustomers->getBindings()));
+            
+            $thirdReminderCustomers = $thirdReminderCustomers->get();
 
             Log::channel('trial-reminders')->info('Third reminder customers found:', ['count' => $thirdReminderCustomers->count()]);
 
