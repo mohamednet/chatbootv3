@@ -7,6 +7,7 @@ use App\Models\Message;
 use App\Models\Customer;
 use App\Jobs\ProcessAIResponse;
 use App\Services\CustomerDataAnalysisService;
+use App\Services\IboProAddPlaylistService; // Added import statement
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
@@ -278,6 +279,13 @@ class FacebookWebhookController extends Controller
                     $hasAttachment = true;
                     $attachment = $messagingEvent['message']['attachments'][0];
                     $messageContent = '[Attachment: [type: ' . $attachment['type'] . ', url: \'' . $attachment['payload']['url'] . '\']]';
+
+                    //here call the service to anaylise the message
+                    if ($attachment['type'] === 'image') {
+                        $iboProService = app(IboProAddPlaylistService::class);
+                        $credentials = $iboProService->analyzeImage($attachment['payload']['url']);
+                        Log::info('Extracted message content',$credentials);
+                    }
                 }
             }
 

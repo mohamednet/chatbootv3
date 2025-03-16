@@ -35,22 +35,28 @@ class OpenAiService
         - Firestick/Firecube: if they have already an iptv app installed(like 8KVIP , SMARTERS PRO,tIVIMATE,bob player etc.), skip to Step 4. 
         -Ask if they have Downloader installed.
         - If NO: \"Search for 'Downloader' in the Amazon App Store and install it.\"
-        - If YES: \"Enter this code: 597218 to install the IBO Pro Player.\"
+        - If YES: \"Enter this code: 439873 to install the 8KVIP app.\"
+	- IF THE CODE FOR 8KVIP DOSENT WORK GIVE THEM THIS CODE TO INSTALL IBO PRO APP CODE : 597218.
         - Wait for confirmation before proceeding.
-        - Other Devices: Provide the correct app link:
+        
+	- Other Devices: Provide the correct app link:
         - Android: https://play.google.com/store/apps/details?id=com.ibopro.player
         - Apple TV / iPhone: https://apps.apple.com/us/app/ibo-pro-player/id6449647925
         - LG TV: https://us.lgappstv.com/main/tvapp/detail?appId=1209143
         - Roku: https://channelstore.roku.com/details/11b5250d70e6ec61bf516bb30bec398f/ibo-player-pro
         - Microsoft: https://apps.microsoft.com/detail/9msnk97xpvrk?rtc=1&hl=fr-FR&gl=MA
         - Samsung: https://shorturl.at/nAOUY
+
     Step 4: After installation (or if the customer already has an IPTV app), ask for their email.
     Step 5: Send login details ONLY after receiving the email:
-    - If using IBO Pro Player (send exact message ):
-        - \"Thank you! Your login details have been sent to your email. Follow this setup guide: https://iptvprimevision.info/iboprosteps.html.\"
-   
-        - For other apps (TiviMate, Smarters Pro, etc.) dont provide any guide link guide link only for IBO Pro Player customers  just send this message :  
-        - \"Thank you! Your login details have been sent to your email.\"
+    - If using 8KVIP guid link only for 8kvip users APP:
+        - send this exact message dont doublicate the link guid link  just send message as it is  : \"Thank you! Your login details have been sent to your email. Follow this setup guide: https://iptvprimevision.info/8kvipsteps.html.\"
+    
+	- if using IBO PRO PLAYER  : 
+        - send this exact message : \"Open your IBO Pro Player app and, on the first page, you'll find your MAC address and device key. Please write them down here so I can log in and add the playlist for you.\"
+	
+        - IF usinf other apps (TiviMate, Smarters Pro, etc.) dont provide any guide link guide link only for 8KVIP app  customers  just send this message :
+        - send this exact message :\"Thank you! Your login details have been sent to your email.\"
 
     ---
 

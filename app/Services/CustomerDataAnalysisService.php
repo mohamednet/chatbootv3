@@ -83,9 +83,9 @@ class CustomerDataAnalysisService
             ]);
 
             $response = OpenAI::chat()->create([
-                'model' => 'gpt-4o-mini',
+                'model' => 'gpt-4-turbo',
                 'messages' => $messages,
-                'temperature' => 0.3, // Lower temperature for more consistent data extraction
+                'temperature' => 0.2, // Lower temperature for more consistent data extraction
             ]);
 
             $aiResponse = json_decode($response->choices[0]->message->content, true);

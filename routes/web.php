@@ -3,6 +3,7 @@
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\FacebookWebhookController;
+use App\Http\Controllers\IboProController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SSEController;
 use App\Http\Controllers\SubscriptionController;
@@ -79,6 +80,11 @@ Route::middleware(['web'])->group(function () {
         dispatch(new TrialReminderJob());
         return "TrialReminderJob dispatched - check logs";
     });
+
+    // Test route for IBO Pro image analysis endpoint
+    Route::post('/analyze-ibo-image', [IboProController::class, 'analyzeImage'])->withoutMiddleware(['web'])->name('ibo.analyze-image');
+    Route::post('/test-ibopro-image', [App\Http\Controllers\TestIboProController::class, 'testImageAnalysis']);
+    Route::get('/analyze-test-image', [IboProController::class, 'analyzeTestImage']);
 });
 
 require __DIR__.'/auth.php';
