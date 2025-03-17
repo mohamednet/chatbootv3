@@ -83,7 +83,7 @@ class CustomerDataAnalysisService
             ]);
 
             $response = OpenAI::chat()->create([
-                'model' => 'gpt-4-turbo',
+                'model' => 'gpt-4o-mini',
                 'messages' => $messages,
                 'temperature' => 0.2, // Lower temperature for more consistent data extraction
             ]);

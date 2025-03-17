@@ -139,7 +139,7 @@ class ChatController extends Controller
         ]);
     }
 
-    protected function sendFacebookMessage($recipientId, $messageText)
+    public function sendFacebookMessage($recipientId, $messageText)
     {
         try {
             $response = Http::withToken(config('services.facebook.page_access_token'))

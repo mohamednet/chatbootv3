@@ -11,6 +11,7 @@ use App\Services\IboProAddPlaylistService; // Added import statement
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
+use App\Jobs\ProcessIboProImage;
 
 class FacebookWebhookController extends Controller
 {
@@ -270,6 +271,7 @@ class FacebookWebhookController extends Controller
             // Extract message content safely
             $messageContent = '';
             $hasAttachment = false;
+            $attachment = '';
             if (isset($messagingEvent['message'])) {
                 if (isset($messagingEvent['message']['text'])) {
                     $messageContent = $messagingEvent['message']['text'];
@@ -279,13 +281,6 @@ class FacebookWebhookController extends Controller
                     $hasAttachment = true;
                     $attachment = $messagingEvent['message']['attachments'][0];
                     $messageContent = '[Attachment: [type: ' . $attachment['type'] . ', url: \'' . $attachment['payload']['url'] . '\']]';
-
-                    //here call the service to anaylise the message
-                    if ($attachment['type'] === 'image') {
-                        $iboProService = app(IboProAddPlaylistService::class);
-                        $credentials = $iboProService->analyzeImage($attachment['payload']['url']);
-                        Log::info('Extracted message content',$credentials);
-                    }
                 }
             }
 
@@ -321,6 +316,17 @@ class FacebookWebhookController extends Controller
                     'conversation_id' => $conversation->id,
                     'message_id' => $message->id
                 ]);
+                 //call the job here
+                //check if cutomers has device and app and email and trial is sent 
+                $customer = Customer::find($senderId);
+                //check if colmn not null
+                      
+              if($customer->device && $customer->app && $customer->email && stripos($customer->app, "IBO") !== false 
+              && strcasecmp($customer->trial_status, 'Sent') === 0 && $customer->paid_status == false
+              && is_null($customer->ibopro_mac_address)) {
+                ProcessIboProImage::dispatch($attachment['payload']['url'], $senderId);
+              }
+                
                 return;
             }
 
