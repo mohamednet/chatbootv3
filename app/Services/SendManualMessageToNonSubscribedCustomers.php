@@ -28,8 +28,8 @@ class SendManualMessageToNonSubscribedCustomers
                 $query->where('paid_status', false)
                       ->orWhereNull('paid_status');
             })
-            ->where('psid', '!=', null)
-            ->where('facebook_messages_disabled', '=', 0)  // Skip customers who have blocked messages
+            ->whereNotNull('facebook_id')
+            ->where('facebook_messages_disabled', false)  // Skip customers who have blocked messages
             ->get();
 
             $successCount = 0;
@@ -40,7 +40,7 @@ class SendManualMessageToNonSubscribedCustomers
                     $response = Http::post("https://graph.facebook.com/v18.0/me/messages", [
                         'access_token' => $this->pageAccessToken,
                         'recipient' => [
-                            'id' => $customer->psid
+                            'id' => $customer->facebook_id
                         ],
                         'message' => [
                             'text' => $message
@@ -51,7 +51,7 @@ class SendManualMessageToNonSubscribedCustomers
 
                     if ($response->successful()) {
                         $successCount++;
-                        Log::info("Message sent successfully to customer ID: {$customer->id}");
+                        Log::info("Message sent successfully to customer ID: {$customer->facebook_id}");
                     } else {
                         $error = $response->json();
                         
@@ -60,19 +60,21 @@ class SendManualMessageToNonSubscribedCustomers
                             switch ($error['error']['code']) {
                                 case 10:
                                     if (isset($error['error']['error_subcode']) && $error['error']['error_subcode'] === 2018278) {
-                                        Log::warning("Message outside allowed time window for customer ID: {$customer->id}");
+                                        Log::warning("Message outside allowed time window for customer ID: {$customer->facebook_id}");
                                     }
                                     break;
                                 case 551:
                                     if (isset($error['error']['error_subcode']) && $error['error']['error_subcode'] === 1545041) {
                                         // Update customer status to indicate they've blocked messages
-                                        $customer->facebook_messages_disabled = 1;
+                                        $customer->facebook_messages_disabled = true;
+                                        $customer->facebook_disabled_at = now();
+                                        $customer->facebook_disabled_reason = 'User blocked messages or deactivated account';
                                         $customer->save();
-                                        Log::warning("Customer has blocked messages or deactivated account: {$customer->id}");
+                                        Log::warning("Customer has blocked messages or deactivated account: {$customer->facebook_id}");
                                     }
                                     break;
                                 default:
-                                    Log::error("Facebook API error for customer ID: {$customer->id}. Error: " . json_encode($error));
+                                    Log::error("Facebook API error for customer ID: {$customer->facebook_id}. Error: " . json_encode($error));
                             }
                         }
                         
@@ -83,7 +85,7 @@ class SendManualMessageToNonSubscribedCustomers
                     usleep(250000); // 250ms delay
                 } catch (\Exception $e) {
                     $failCount++;
-                    Log::error("Error sending message to customer ID: {$customer->id}. Error: " . $e->getMessage());
+                    Log::error("Error sending message to customer ID: {$customer->facebook_id}. Error: " . $e->getMessage());
                 }
             }
 
