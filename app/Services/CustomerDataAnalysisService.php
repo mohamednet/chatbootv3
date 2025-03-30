@@ -14,31 +14,30 @@ use Exception;
 
 class CustomerDataAnalysisService
 {
-    private $systemPrompt = "
-    IMPORTANT:
-    Your task is to assist customers and dynamically track the following information during the conversation:
-    - Device: Identify the customer's device based on their messages (e.g., Firestick, Android, iPhone, etc.).
-    - App: Identify the IPTV app the customer is using or planning to use (e.g., Tivimate, IBO Pro Player, etc.).
-    - Email: Detect the customer's email address when provided.
+    private $systemPrompt =  "
+    You are a strict data extraction assistant.
+    Your ONLY job is to extract the following information from the user's messages:
+    - device: The device being used (e.g., Firestick, Android TV, iPhone, etc.)
+    - app: The IPTV app mentioned (e.g., Tivimate, IBO Pro Player, IPTV Smarters)
+    - email: Any provided email address
 
-    CRITICAL - YOU MUST FORMAT YOUR ENTIRE RESPONSE AS JSON:
-    You must ALWAYS return your COMPLETE response in this exact JSON format, with no additional text before or after so I can work on it in the backend:
+    You MUST return ONLY this exact JSON — nothing else:
 
     {
-        response: \"Your actual message to the customer goes here\",
-        customers_data: {
-            device: null,
-            app: null,
-            email: null
-        }
+    'customers_data': {
+        'device': null,
+        'app': null,
+        'email': null
+    }
     }
 
-    IMPORTANT:
-    - Your ENTIRE response must be valid JSON with response and customers_data fields always present.
-    - Do not add any text before or after the JSON.
-    - Always include both response and customers_data.
-    - Update customer data when you detect new information.
-    - Keep previously detected values unless the customer changes them.";
+    RULES:
+    - Use double quotes for all keys and string values (standard JSON)
+    - Return actual JSON — NOT a string containing JSON
+    - Do NOT wrap output in markdown (```json)
+    - Do NOT include any extra explanation or commentary
+    - If a value is not yet detected, use null                      
+   ";
 
     public function analyzeCustomerData($conversationId)
     {
@@ -64,23 +63,25 @@ class CustomerDataAnalysisService
                         'role' => 'user',
                         'content' => $msg->content
                     ];
-                    $currentContext .= "User: " . $msg->content . "\n";
                 } else {
                     $messages[] = [
                         'role' => 'assistant',
                         'content' => $msg->content
                     ];
-                    $currentContext .= "Assistant: " . $msg->content . "\n";
                 }
             }
 
-            // Add current context to system message
-            $messages[0]['content'] .= "\n\nCurrent Conversation:\n" . $currentContext;
-
-            Log::info('Analyzing customer data', [
-                'conversation_id' => $conversationId,
-                'context' => $currentContext
+            Log::info('Conversation history', [
+                'message history 11111' => $messages,
             ]);
+
+            $messages[] = [
+                'role' => 'user',
+                'content' => 'Please analyze all the above messages and return only the customers_data JSON.'
+            ];
+
+            // Add current context to system message
+    
 
             $response = OpenAI::chat()->create([
                 'model' => 'gpt-4o-mini',
@@ -90,7 +91,7 @@ class CustomerDataAnalysisService
 
             $aiResponse = json_decode($response->choices[0]->message->content, true);
             
-            //here update the customer data
+          
             if (isset($aiResponse['customers_data'])) {
                 try {
                     Customer::where('conversation_id', $conversationId)
