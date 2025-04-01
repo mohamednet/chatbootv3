@@ -10,11 +10,12 @@ class Kernel extends ConsoleKernel
 {
     protected $commands = [
         Commands\ProcessTrialReminders::class,
+        Commands\RunTrialReminders::class,
     ];
 
     protected function schedule(Schedule $schedule): void
     {
-        $schedule->command('trials:process-reminders')
+        $schedule->command('run:trial-reminders')
                 ->everyFiveMinutes();
     }
 
