@@ -4,20 +4,20 @@ namespace App\Console;
 
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
-use App\Jobs\ProcessTrialRemindersJob;
+use App\Console\Commands\DispatchTrialReminders;
 
 class Kernel extends ConsoleKernel
 {
-    protected $commands = [];
+    protected $commands = [
+        DispatchTrialReminders::class
+    ];
 
     protected function schedule(Schedule $schedule): void
     {
-        // Process trial reminders every 5 minutes
-        $schedule->call(function () {
-            ProcessTrialRemindersJob::dispatch();
-        })->everyFiveMinutes()
-          ->name('process_trial_reminders')
-          ->withoutOverlapping();
+        $schedule->command('reminders:dispatch')
+                ->everyFiveMinutes()
+                ->withoutOverlapping()
+                ->appendOutputTo(storage_path('logs/scheduler.log'));
     }
 
     protected function commands(): void
