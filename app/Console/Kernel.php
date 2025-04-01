@@ -12,9 +12,9 @@ class Kernel extends ConsoleKernel
 
     protected function schedule(Schedule $schedule): void
     {
-        $schedule->job(new ProcessTrialRemindersJob)
-                ->everyFiveMinutes()
-                ->withoutOverlapping();
+        $schedule->call(function () {
+            ProcessTrialRemindersJob::dispatch();
+        })->everyFiveMinutes()->name('process_trial_reminders');
     }
 
     protected function commands(): void
