@@ -15,9 +15,9 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
         // Schedule is handled by external PowerShell script
-        $schedule->command('trials:process-reminders')
-                ->everyFiveMinutes()
-                ->appendOutputTo(storage_path('logs/trial-reminders.log'));
+        $schedule->job(new Commands\ProcessTrialReminders())
+        ->everyFiveMinutes()
+        ->appendOutputTo(storage_path('logs/trial-reminders.log'));
     }
 
     protected function commands(): void
