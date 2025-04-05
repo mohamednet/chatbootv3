@@ -84,7 +84,7 @@ class IboProAddPlaylistService
             $response = Http::post('http://167.88.165.54:8080/add_playlist', [
                 'mac_address' => $macAddress,
                 'device_key' => $deviceKey,
-                'playlist_name' => 'PrimeVision',
+                'playlist_name' => 'Nexora',
                 'playlist_url' => $m3uLink
             ]);
 
