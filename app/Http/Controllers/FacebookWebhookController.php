@@ -103,7 +103,7 @@ class FacebookWebhookController extends Controller
             $conversation = Conversation::firstOrCreate(
                 ['facebook_user_id' => $recipientId],
                 [
-                    'response_mode' => 'manual', // Set to manual mode for page messages
+                    'response_mode' => 'ai', // Set to manual mode for page messages
                     'created_at' => now(),
                     'updated_at' => now()
                 ]
