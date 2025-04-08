@@ -136,15 +136,23 @@ class FacebookWebhookController extends Controller
             }
 
             // Store the outgoing message
-            $message = new Message([
-                'conversation_id' => $conversation->id,
-                'content' => $messageContent,
-                'type' => 'outgoing',
-                'sender_type' => 'admin',
-                'facebook_message_id' => $messageId,
-                'processed' => true // Mark as processed immediately
-            ]);
-            $message->save();
+                // Update conversation to manual mode and clear pending responses
+                if (isset($messagingEvent['message']['text']) && trim(strtolower($messagingEvent['message']['text'])) === '-'){
+                    $conversation->update([
+                        'response_mode' => 'manual',
+                        'updated_at' => now()
+                    ]);
+                }else {
+                    $message = new Message([
+                        'conversation_id' => $conversation->id,
+                        'content' => $messageContent,
+                        'type' => 'outgoing',
+                        'sender_type' => 'admin',
+                        'facebook_message_id' => $messageId,
+                        'processed' => true // Mark as processed immediately
+                    ]);
+                    $message->save();
+                }
 
             Log::info('Processing message:', ['content' => $messageContent]);
 
@@ -226,11 +234,7 @@ class FacebookWebhookController extends Controller
                 'content' => $messageContent
             ]);
 
-            // Update conversation to manual mode and clear pending responses
-            $conversation->update([
-                'response_mode' => 'manual',
-                'updated_at' => now()
-            ]);
+        
 
             // Mark any unprocessed messages as processed
             Message::where('conversation_id', $conversation->id)
