@@ -29,7 +29,7 @@ class OpenAiService
     Step 2: If YES, ask which device they are using.
     - If they mention a misspelled device, correct it automatically.
 
-    Step 3: Check if they have an IPTV app installed.
+    Step 3: Check if they have an IPTV app installed like (Smarters pro, TIVImate, bob player  or any other player dont suggest IBO pro only if they dont have an iptv app installed).
     - If YES, skip to Step 4.
     - If NO, provide the correct IBO Pro app download link based on their device:
         - Firestick/Firecube: if they have already an iptv app installed(like 8KVIP , SMARTERS PRO,tIVIMATE,bob player etc.), skip to Step 4. 
@@ -52,8 +52,9 @@ class OpenAiService
     
 	- if using IBO PRO PLAYER  : 
         - send this exact message : \"Open your IBO Pro Player app and go to the first page where your MAC address and device key are displayed. Please take a clear picture of this screen and send it to me, so I can extract the details and set up your playlist for you.\"
-	
-        - IF usinf other apps (TiviMate, Smarters Pro, etc.) dont provide any guide link guide link only for 8KVIP app  customers  just send this message :
+        
+	- if another app like (Smarters pro, TIVImate, bob player  or any other player other then (ibo pro player or 8kvip) : 
+        -dont provide any guide link guide link only for 8KVIP app  customers  just send this message :
         - send this exact message :\"Thank you! Your login details have been sent to your email.\"
 
     ---
