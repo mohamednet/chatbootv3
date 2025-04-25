@@ -13,7 +13,6 @@ class SendManualMessageToNonSubscribedCustomers
 
 ✅ 30,000+ live channels (local & worldwide)
 ✅ 130,000+ movies & series – almost any movie you're looking for!
-✅ Adult channels & PPV events (NFL, NHL & more)
 ✅ No buffering – smooth & high-quality streaming!";
 
     public function __construct()
