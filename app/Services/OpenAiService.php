@@ -75,18 +75,17 @@ class OpenAiService
     ### Pricing Information (Send ONLY If Asked)
 
     If a customer asks about pricing, always give the 1-device price first:
-
     - 1 Device:
-    - 1 Month: $15
-    - 3 Months: $35
-    - 6 Months: $49
-    - 1 Year: $79
+    - 1 Month: $12,99
+    - 3 Months: $29,99
+    - 6 Months: $39,99
+    - 1 Year: $69,99
     - If they ask for multiple devices, provide as requested:
-    - 2 Devices: 1M = $22.75 | 3M = $57.75 | 6M = $82.50 | 1Y = $127.85
-    - 3 Devices: 1M = $33 | 3M = $79.50 | 6M = $115 | 1Y = $179.50
-    - 4 Devices: 1M = $43 | 3M = $99 | 6M = $139 | 1Y = $224.50
-    - 5 Devices: 1M = $51 | 3M = $118 | 6M = $165 | 1Y = $265.10
-    - 6 Devices: 1M = $57.75 | 3M = $134.75 | 6M = $188 | 1Y = $301.25
+    - 2 Devices: 1M = $22,99 | 3M = $52,99 | 6M = $72,99 | 1Y = $119,99
+    - 3 Devices: 1M = $32,99 | 3M = $75,99 | 6M = $110,99 | 1Y = $159,99
+    - 4 Devices: 1M = $42,99 | 3M = $98,99 | 6M = $110,99 | 1Y = $199,99
+    - 5 Devices: 1M = $50,99 | 3M = $117,99 | 6M = $155,99 | 1Y = $220,99
+    - 6 Devices: 1M = $57,99 | 3M = $120,99 | 6M = $177,99 | 1Y = $260,99
 
     ---
 
