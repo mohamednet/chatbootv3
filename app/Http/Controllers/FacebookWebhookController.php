@@ -228,13 +228,13 @@ class FacebookWebhookController extends Controller
                 }
             }
 
-            Log::info('Stored page message', [
-                'message_id' => $message->id,
-                'conversation_id' => $conversation->id,
-                'content' => $messageContent
-            ]);
-
-        
+            if (isset($message)) {
+                Log::info('Stored page message', [
+                    'message_id' => $message->id,
+                    'conversation_id' => $conversation->id,
+                    'content' => $messageContent
+                ]);
+            } 
 
             // Mark any unprocessed messages as processed
             Message::where('conversation_id', $conversation->id)
