@@ -9,11 +9,22 @@ use Illuminate\Support\Facades\Log;
 class SendManualMessageToNonSubscribedCustomers
 {
     private $pageAccessToken;
-    private const SPECIAL_OFFER_MESSAGE = "We have a special offer for new customers! 🎉 You can try our full server for an entire month for just $9.99!
+    private const SPECIAL_OFFER_MESSAGE = "🎆 4th of July Special! 
+        Start today for just $8.99 — includes 1st month + IBO Player activation
+        Then only $13.95/month
 
-✅ 30,000+ live channels (local & worldwide)
-✅ 130,000+ movies & series – almost any movie you're looking for!
-✅ No buffering – smooth & high-quality streaming!";
+        We offer a premium service with:
+        📺 30,000+ live channels
+        🎬 100,000+ movies & series in 4K/8K
+        🏈 NFL, NBA, NHL, MLB, ESPN, PPV & more
+        🎞 Netflix, Hulu, Prime, HBO, Paramount+
+        🌍 USA local + worldwide channels
+
+        ✅ Works on all devices
+        ✅ Instant setup — no contracts
+        ✅ 7-day money-back guarantee
+
+        🎉 Message me to get started today!";
 
     public function __construct()
     {
