@@ -9,22 +9,19 @@ use Illuminate\Support\Facades\Log;
 class SendManualMessageToNonSubscribedCustomers
 {
     private $pageAccessToken;
-    private const SPECIAL_OFFER_MESSAGE = "🎆 4th of July Special! 
-        Start today for just $8.99 — includes 1st month + IBO Player activation
-        Then only $13.95/month
+    private const SPECIAL_OFFER_MESSAGE = "
+    🎉 Exclusive IPTV Deal – Limited Time Only! 🎉
 
-        We offer a premium service with:
-        📺 30,000+ live channels
-        🎬 100,000+ movies & series in 4K/8K
-        🏈 NFL, NBA, NHL, MLB, ESPN, PPV & more
-        🎞 Netflix, Hulu, Prime, HBO, Paramount+
-        🌍 USA local + worldwide channels
+    🔥 Get 1 Full Year of Premium IPTV for just $49 (regular price much higher!).
+    ✅ 30,000+ Live Channels (local & worldwide)
+    ✅ 130,000+ Movies & Series (4K/8K quality)
+    ✅ Sports, PPV Events, Channels & More
+    ✅ No Buffering – Fast & Stable Servers
 
-        ✅ Works on all devices
-        ✅ Instant setup — no contracts
-        ✅ 7-day money-back guarantee
+    ⚠️ Hurry – Only 10 spots left for this special offer! Once they’re gone, the price goes back up.
 
-        🎉 Message me to get started today!";
+    📩 Message us now to grab your deal before it’s too late!
+";
 
     public function __construct()
     {
