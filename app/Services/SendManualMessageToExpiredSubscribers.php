@@ -11,17 +11,9 @@ class SendManualMessageToExpiredSubscribers
     private $pageAccessToken;
 
     private const DEFAULT_MESSAGE =  "
-    🔥 Limited Time Deal! 🔥
-    Get *6 Months of Unlimited Access* for just $39 – and that even includes the Player Activation (normally $10 by itself)!
-
-    ✅ 30,000+ Live Channels
-    ✅ 130,000+ Movies & Series in 4K/8K
-    ✅ NFL, NBA, NHL, MLB, ESPN, PPV & more
-    ✅ Netflix, Hulu, Prime, HBO, Paramount+
-    ✅ USA local + worldwide channels
-    ✅ 24/7 & adult content
-
-    🎯 Don’t miss this exclusive 6-month deal – just reply *START* and I’ll set you up today!
+ 🔥 Are you interested in a subscription?
+    34,000+ Channels & 140,000+ Movies/Series — only $13.95/month!
+    💰 Full refund within 7 days if not satisfied
     ";
 
     public function __construct()
