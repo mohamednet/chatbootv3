@@ -10,9 +10,8 @@ class SendManualMessageToNonSubscribedCustomers
 {
     private $pageAccessToken;
     private const SPECIAL_OFFER_MESSAGE = "
-   🔥 Are you interested in a subscription?
-    34,000+ Channels & 140,000+ Movies/Series — only $13.95/month!
-    💰 Full refund within 7 days if not satisfied
+   Just wanted to check if you still want to continue 😊  
+I can send the payment link anytime — it’s only $13.95/month for full access.
     ";
 
     public function __construct()
